@@ -14,7 +14,7 @@ class App(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("FolderGallery " + version)
-        self.resize(1480, 720)
+        self.resize(1480, 900)
         self.setStyleSheet("""
             background: white;
         """)
@@ -28,15 +28,15 @@ class App(QMainWindow):
 
         self.scrollArea = QScrollArea(self)
         self.scrollArea.setWidgetResizable(True)
-        self.scrollArea.setWidget(QWidget())
-        self.layout = QGridLayout(self.scrollArea.widget())
+        scrollWidget = QWidget()
+        self.layout = QGridLayout(scrollWidget)
+        self.scrollArea.setWidget(scrollWidget)
 
         mainLayout = QVBoxLayout()
         mainLayout.addWidget(self.scrollArea)
 
         centralWidget = QWidget(self)
         centralWidget.setStyleSheet("""
-            padding: 10px;
             background: #212121;
         """)
         centralWidget.setLayout(mainLayout)
@@ -84,7 +84,7 @@ class App(QMainWindow):
                 firstImgPath = os.path.join(subDir, imgFiles[0])
                 pixmap = QPixmap(firstImgPath)
 
-                pixmap = pixmap.scaled(300, 300, Qt.KeepAspectRatio)
+                pixmap = pixmap.scaled(350, 350, Qt.KeepAspectRatio)
 
                 imgLabel = QLabel(self)
                 imgLabel.setPixmap(pixmap)

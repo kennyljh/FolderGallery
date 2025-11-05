@@ -416,3 +416,9 @@ FodyWeavers.xsd
 *.msix
 *.msm
 *.msp
+
+src/build/
+src/dist/
+
+/src/build/
+/src/dist/
