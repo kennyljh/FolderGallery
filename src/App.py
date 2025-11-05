@@ -14,7 +14,10 @@ class App(QMainWindow):
         super().__init__()
 
         self.setWindowTitle("FolderGallery " + version)
-        self.resize(1280, 720)
+        self.resize(1480, 720)
+        self.setStyleSheet("""
+            background: white;
+        """)
 
         toolbar = self.addToolBar("Toolbar")
         toolbar.setMovable(False)
@@ -32,6 +35,10 @@ class App(QMainWindow):
         mainLayout.addWidget(self.scrollArea)
 
         centralWidget = QWidget(self)
+        centralWidget.setStyleSheet("""
+            padding: 10px;
+            background: #212121;
+        """)
         centralWidget.setLayout(mainLayout)
         self.setCentralWidget(centralWidget)
 
@@ -82,9 +89,21 @@ class App(QMainWindow):
                 imgLabel = QLabel(self)
                 imgLabel.setPixmap(pixmap)
                 imgLabel.setAlignment(Qt.AlignCenter)
+                imgLabel.setStyleSheet("""
+                    padding: 5px;
+                    border: 1px solid white;
+                    border-radius: 5px;
+                """)
 
                 goButton = QPushButton("Open")
                 goButton.clicked.connect(lambda checked, destination=subDir: self.openDirInExplorer(destination))
+                goButton.setStyleSheet("""
+                    background: white;
+                    color: black;
+                    border-radius: 5px;
+                    padding: 5px;
+                    margin: 0px 0px 20px 0px;
+                """)
 
                 imgBtnLayout = QVBoxLayout()
                 imgBtnLayout.addWidget(imgLabel)
