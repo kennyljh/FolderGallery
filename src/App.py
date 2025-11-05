@@ -3,6 +3,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import os
 import sys
+import subprocess
 
 version = "0.1.0"
 savedDir = ""
@@ -82,12 +83,23 @@ class App(QMainWindow):
                 imgLabel.setPixmap(pixmap)
                 imgLabel.setAlignment(Qt.AlignCenter)
 
-                self.layout.addWidget(imgLabel, row, col)
+                goButton = QPushButton("Open")
+                goButton.clicked.connect(lambda checked, destination=subDir: self.openDirInExplorer(destination))
+
+                imgBtnLayout = QVBoxLayout()
+                imgBtnLayout.addWidget(imgLabel)
+                imgBtnLayout.addWidget(goButton)
+
+                self.layout.addLayout(imgBtnLayout, row, col)
 
                 col += 1
                 if col > 3:
                     col = 0
                     row += 1
+
+    def openDirInExplorer(self, dir):
+        # print(f"Going to this dir: {os.path.normpath(dir)}")
+        subprocess.Popen(f'explorer "{os.path.normpath(dir)}"')
 
 app = QApplication([])
 window = App()
