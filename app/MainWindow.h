@@ -83,6 +83,8 @@ class MainWindow : public QMainWindow {
 
         void openFolderInExplorer(const QString &folderPath);
 
+        void recalculateListWidgetSize();
+
         bool eventFilter(QObject *watched, QEvent *event) override;
     signals:
     private slots:

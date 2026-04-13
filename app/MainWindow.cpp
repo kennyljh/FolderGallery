@@ -15,6 +15,8 @@
 #include <QListWidgetItem>
 #include <QDesktopServices>
 #include <QUrl>
+#include <QCoreApplication>
+#include <QProgressDialog>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
 
@@ -70,7 +72,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent) {
                         QIntValidator *validator = new QIntValidator(1, 20, itemsPerRowEdt);
                         itemsPerRowEdt->setValidator(validator);
                         itemsPerRowEdt->setText("8");
-                        connect(itemsPerRowEdt, &QLineEdit::textChanged, this, &MainWindow::itemsPerRowChanged);
+                        connect(itemsPerRowEdt, &QLineEdit::textEdited, this, &MainWindow::itemsPerRowChanged);
                         connect(itemsPerRowEdt, &QLineEdit::inputRejected, this, &MainWindow::invalidRowInput);
 
                         incrementBtn = new QPushButton("+", rightMiscWindow);
@@ -130,9 +132,26 @@ bool MainWindow::processSelectedDir (const QString &selectedDir, QMap<QString, Q
 
 void MainWindow::insertFolders (const QMap<QString, QList<QString>> &folderToFiles){
 
+    contentListWidget->setUpdatesEnabled(false);
+    contentListWidget->blockSignals(true);
     contentListWidget->clear();
 
+    int width = contentListWidget->viewport()->width();
+    int spacing = contentListWidget->spacing();
+    int iconWidth = (width - (itemsPerRowEdt->text().toInt() * 2) * spacing) / itemsPerRowEdt->text().toInt();
+
+    QProgressDialog progress("Loading folders...", "Cancel", 0, folderToFiles.count(), this);
+    progress.setWindowModality(Qt::WindowModal);
+    int count = 0;
+
     for (const QString &folderPath : folderToFiles.keys()){
+
+        statusBar->showMessage("Found " + folderPath, 0);
+        QCoreApplication::processEvents();
+
+        count += 1;
+        progress.setValue(count);
+        if (progress.wasCanceled()) break;
 
         QList<QString> copy = folderToFiles.value(folderPath);
         if (copy.first().isNull()) continue;
@@ -140,20 +159,47 @@ void MainWindow::insertFolders (const QMap<QString, QList<QString>> &folderToFil
         QPixmap pix(copy.first());
         if (pix.isNull()) continue;
 
-        QListWidgetItem *folder = new QListWidgetItem(QIcon(pix), QDir (folderPath).dirName());
+        QString folderName = QDir (folderPath).dirName();
+        QListWidgetItem *folder = new QListWidgetItem(QIcon(pix), folderName);
+        folder->setData(Qt::UserRole, folderName);
+
+        QFontMetrics font(contentListWidget->font());
+        folder->setText(font.elidedText(folderName, Qt::ElideMiddle, iconWidth));
         contentListWidget->addItem(folder);
     }
+
+    contentListWidget->blockSignals(false);
+    contentListWidget->setUpdatesEnabled(true);
+    contentListWidget->update();
+
     statusBar->showMessage("Showing folders by ascending modified date.");
 }
 
 void MainWindow::reverseInsertFolders (const QMap<QString, QList<QString>> &folderToFiles){
 
+    contentListWidget->setUpdatesEnabled(false);
+    contentListWidget->blockSignals(true);
     contentListWidget->clear();
 
     QVector<QString> keys = folderToFiles.keys();
     std::reverse(keys.begin(), keys.end());
 
+    int width = contentListWidget->viewport()->width();
+    int spacing = contentListWidget->spacing();
+    int iconWidth = (width - (itemsPerRowEdt->text().toInt() * 2) * spacing) / itemsPerRowEdt->text().toInt();
+
+    QProgressDialog progress("Loading folders...", "Cancel", 0, folderToFiles.count(), this);
+    progress.setWindowModality(Qt::WindowModal);
+    int count = 0;
+
     for (const QString &folderPath : keys){
+
+        statusBar->showMessage("Found " + folderPath, 0);
+        QCoreApplication::processEvents();
+
+        count += 1;
+        progress.setValue(count);
+        if (progress.wasCanceled()) break;
 
         QList<QString> copy = folderToFiles.value(folderPath);
         if (copy.first().isNull()) continue;
@@ -161,19 +207,47 @@ void MainWindow::reverseInsertFolders (const QMap<QString, QList<QString>> &fold
         QPixmap pix(copy.first());
         if (pix.isNull()) continue;
 
-        QListWidgetItem *folder = new QListWidgetItem(QIcon(pix), QDir (folderPath).dirName());
+        QString folderName = QDir (folderPath).dirName();
+        QListWidgetItem *folder = new QListWidgetItem(QIcon(pix), folderName);
+        folder->setData(Qt::UserRole, folderName);
+
+        QFontMetrics font(contentListWidget->font());
+        folder->setText(font.elidedText(folderName, Qt::ElideMiddle, iconWidth));
         contentListWidget->addItem(folder);
     }
+
+    contentListWidget->blockSignals(false);
+    contentListWidget->setUpdatesEnabled(true);
+    contentListWidget->update();
+
     statusBar->showMessage("Showing folders by reversed modified date.");
 }
 
 void MainWindow::insertFiles(const QString &chosenFolder, const QMap<QString, QList<QString>> &folderToFiles){
 
+    contentListWidget->setUpdatesEnabled(false);
+    contentListWidget->blockSignals(true);
     contentListWidget->clear();
+
+    int width = contentListWidget->viewport()->width();
+    int spacing = contentListWidget->spacing();
+    int iconWidth = (width - (itemsPerRowEdt->text().toInt() * 2) * spacing) / itemsPerRowEdt->text().toInt();
+
     QDir folderPath(QDir (*selectedDir).filePath(chosenFolder));
     QList<QString> copy = folderToFiles.value(folderPath.path());
 
+    QProgressDialog progress("Loading files...", "Cancel", 0, copy.size(), this);
+    progress.setWindowModality(Qt::WindowModal);
+    int count = 0;
+
     for (const QString &filePath : copy){
+
+        statusBar->showMessage("Found " + filePath);
+        QCoreApplication::processEvents();
+
+        count += 1;
+        progress.setValue(count);
+        if (progress.wasCanceled()) break;
 
         if (filePath.isNull()) continue;
 
@@ -181,28 +255,48 @@ void MainWindow::insertFiles(const QString &chosenFolder, const QMap<QString, QL
         if (pix.isNull()) continue;
 
         QString fileName = QDir (filePath).dirName();
-        if (fileName.size() > 13){
-
-            QString extension = QDir (filePath).dirName().last(8);
-            fileName.truncate(5);
-            fileName.append("..." + extension);
-        }
-
         QListWidgetItem *file = new QListWidgetItem(QIcon(pix), fileName);
+        file->setData(Qt::UserRole, fileName);
+
+        QFontMetrics font(contentListWidget->font());
+        file->setText(font.elidedText(fileName, Qt::ElideMiddle, iconWidth));
         contentListWidget->addItem(file);
     }
+
+    contentListWidget->blockSignals(false);
+    contentListWidget->setUpdatesEnabled(true);
+    contentListWidget->update();
+
     statusBar->showMessage("Showing files for " + chosenFolder + " by ascending modified date.");
 }
 
 void MainWindow::reverseInsertFiles(const QString &chosenFolder, const QMap<QString, QList<QString>> &folderToFiles){
 
+    contentListWidget->setUpdatesEnabled(false);
+    contentListWidget->blockSignals(true);
     contentListWidget->clear();
+
+    int width = contentListWidget->viewport()->width();
+    int spacing = contentListWidget->spacing();
+    int iconWidth = (width - (itemsPerRowEdt->text().toInt() * 2) * spacing) / itemsPerRowEdt->text().toInt();
+
     QDir folderPath(QDir (*selectedDir).filePath(chosenFolder));
 
-    QVector<QString> files = folderToFiles.value(folderPath.path());
-    std::reverse(files.begin(), files.end());
+    QVector<QString> copy = folderToFiles.value(folderPath.path()).toVector();
+    std::reverse(copy.begin(), copy.end());
 
-    for (const QString &filePath : files){
+    QProgressDialog progress("Loading files...", "Cancel", 0, copy.size(), this);
+    progress.setWindowModality(Qt::WindowModal);
+    int count = 0;
+
+    for (const QString &filePath : copy){
+
+        statusBar->showMessage("Found " + filePath);
+        QCoreApplication::processEvents();
+
+        count += 1;
+        progress.setValue(count);
+        if (progress.wasCanceled()) break;
 
         if (filePath.isNull()) continue;
 
@@ -210,15 +304,18 @@ void MainWindow::reverseInsertFiles(const QString &chosenFolder, const QMap<QStr
         if (pix.isNull()) continue;
 
         QString fileName = QDir (filePath).dirName();
-        if (fileName.size() > 13){
-            QString extension = QDir (filePath).dirName().last(8);
-            fileName.truncate(5);
-            fileName.append("..." + extension);
-        }
-
         QListWidgetItem *file = new QListWidgetItem(QIcon(pix), fileName);
+        file->setData(Qt::UserRole, fileName);
+
+        QFontMetrics font(contentListWidget->font());
+        file->setText(font.elidedText(fileName, Qt::ElideMiddle, iconWidth));
         contentListWidget->addItem(file);
     }
+
+    contentListWidget->blockSignals(false);
+    contentListWidget->setUpdatesEnabled(true);
+    contentListWidget->update();
+
     statusBar->showMessage("Showing files for " + chosenFolder + " by descending modified date.");
 }
 
@@ -227,6 +324,8 @@ void MainWindow::changeItemsPerRow(int val){
     int result = itemsPerRowEdt->text().toInt() + val;
     if (result <= 0) result = 1;
     itemsPerRowEdt->setText(QString::number(result));
+
+    recalculateListWidgetSize();
 }
 
 void MainWindow::openFolderInExplorer(const QString &folderPath){
@@ -255,11 +354,41 @@ void MainWindow::goButtonClicked() {
 void MainWindow::incrementRowValueButtonClicked(){
 
     changeItemsPerRow(1);
+
+    recalculateListWidgetSize();
+
+    if (!withinFolder && reverse){
+        reverseInsertFolders(*folderToFiles);
+    }
+    else if (!withinFolder && !reverse) {
+        insertFolders(*folderToFiles);
+    }
+    else if (withinFolder && reverse){
+        reverseInsertFiles(*selectedFolder, *folderToFiles);
+    }
+    else if (withinFolder && !reverse){
+        insertFiles(*selectedFolder, *folderToFiles);
+    }
 }
 
 void MainWindow::decrementRowValueButtonClicked() {
 
     changeItemsPerRow(-1);
+
+    recalculateListWidgetSize();
+
+    if (!withinFolder && reverse){
+        reverseInsertFolders(*folderToFiles);
+    }
+    else if (!withinFolder && !reverse) {
+        insertFolders(*folderToFiles);
+    }
+    else if (withinFolder && reverse){
+        reverseInsertFiles(*selectedFolder, *folderToFiles);
+    }
+    else if (withinFolder && !reverse){
+        insertFiles(*selectedFolder, *folderToFiles);
+    }
 }
 
 void MainWindow::itemsPerRowChanged(){
@@ -267,16 +396,25 @@ void MainWindow::itemsPerRowChanged(){
     if (!itemsPerRowEdt->hasAcceptableInput()) return;
     statusBar->clearMessage();
 
-    int width = contentListWidget->viewport()->width();
-    int spacing = contentListWidget->spacing();
-    int iconWidth = (width - (itemsPerRowEdt->text().toInt() * 2) * spacing) / itemsPerRowEdt->text().toInt();
+    recalculateListWidgetSize();
 
-    contentListWidget->setIconSize(QSize(iconWidth, iconWidth * 1.414));
+    if (!withinFolder && reverse){
+        reverseInsertFolders(*folderToFiles);
+    }
+    else if (!withinFolder && !reverse) {
+        insertFolders(*folderToFiles);
+    }
+    else if (withinFolder && reverse){
+        reverseInsertFiles(*selectedFolder, *folderToFiles);
+    }
+    else if (withinFolder && !reverse){
+        insertFiles(*selectedFolder, *folderToFiles);
+    }
 }
 
 void MainWindow::invalidRowInput(){
 
-    statusBar->showMessage("Row value between 0-20 only.");
+    statusBar->showMessage("Row value between 1-20 only.");
 }
 
 void MainWindow::dateSortButtonClicked(){
@@ -300,10 +438,11 @@ void MainWindow::listWidgetItemClicked(QListWidgetItem *item){
 
     if (item && !withinFolder) {
 
-        *selectedFolder = item->text();
+        QString folderName = item->data(Qt::UserRole).toString();
+        *selectedFolder = folderName;
 
-        reverse = true;
-        insertFiles(item->text(), *folderToFiles);
+        reverse = false;
+        insertFiles(folderName, *folderToFiles);
         withinFolder = !withinFolder;
     }
     else if (item && withinFolder){
@@ -314,10 +453,19 @@ void MainWindow::listWidgetItemClicked(QListWidgetItem *item){
 void MainWindow::backButtonClicked(){
 
     if (withinFolder){
-        reverse = true;
+        reverse = false;
         insertFolders(*folderToFiles);
         withinFolder = !withinFolder;
     }
+}
+
+void MainWindow::recalculateListWidgetSize(){
+
+    int width = contentListWidget->viewport()->width();
+    int spacing = contentListWidget->spacing();
+    int iconWidth = (width - (itemsPerRowEdt->text().toInt() * 2) * spacing) / itemsPerRowEdt->text().toInt();
+
+    contentListWidget->setIconSize(QSize(iconWidth, iconWidth * 1.414));
 }
 
 bool MainWindow::eventFilter(QObject *watched, QEvent *event) {
