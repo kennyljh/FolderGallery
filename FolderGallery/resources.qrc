@@ -3,5 +3,7 @@
         <file>icons/file-document-light.svg</file>
         <file>icons/folder-light.svg</file>
         <file>icons/image-light.svg</file>
+        <file>icons/search-light.svg</file>
+        <file>icons/settings-light.svg</file>
     </qresource>
 </RCC>

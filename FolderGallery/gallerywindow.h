@@ -11,6 +11,8 @@
 #include <QVBoxLayout>
 #include <QFrame>
 #include <QComboBox>
+#include <QStringList>
+#include <QString>
 
 class GalleryWindow : public QMainWindow{
     Q_OBJECT
@@ -33,6 +35,15 @@ class GalleryWindow : public QMainWindow{
         QFrame *galleryFrame;
         QVBoxLayout *galleryLayout;
         QListWidget *galleryLWidget;
+
+        /**
+         * @brief populateCBox - populates given combo box with
+         * list of strings and sets current selected option
+         * @param cbox
+         * @param list
+         * @param current
+         */
+        void populateCBox(QComboBox &cbox, QStringList &list, QString &current);
 };
 
 #endif // GALLERYWINDOW_H
