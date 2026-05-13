@@ -6,32 +6,30 @@
 #include <QString>
 #include <QMap>
 #include <QList>
+#include <QFileInfo>
+#include <QFileInfoList>
 
 /**
  * @brief The IOManager class - handles asynchronous file I/O
  * requests
  */
 class IOManager : public QObject {
+    Q_OBJECT
     public:
         explicit IOManager(QWidget *parent = nullptr);
 
-        struct itemBundle{
-            QString *name;
-            QString *date;
-            QString *absoluteDir;
+        struct folderBundle {
+            QFileInfo *folderInfo;
+            QFileInfoList *filesInfos;
         };
 
-        struct folderBundle {
-            QString *name;
-            QString *date;
-            QString *absoluteDir;
-            QList<itemBundle*> itemsBundles;
-        };
+        void processDirAsync(const QString &absolutePath);
     private:
-        void processDirAsync(QString &absolutePath);
 
     signals:
-        void dirProcessDone(QMap<QString, folderBundle*> &namesToFolderBundles);
+        void dirProcessDone(const QMap<QString, folderBundle*> &namesToFolderBundles);
+
+        void IOFailure(const QString &msg);
 };
 
 #endif // IOMANAGER_H

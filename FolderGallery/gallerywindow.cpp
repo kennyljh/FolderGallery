@@ -12,6 +12,8 @@
 #include <QComboBox>
 #include <QList>
 #include <QDebug>
+#include <QStatusBar>
+#include "iomanager.h"
 
 GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
 
@@ -29,6 +31,8 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
             currentDirLnEdt->setPlaceholderText("Enter folder directory...");
             searchBtn = new QPushButton(topFrame);
             searchBtn->setIcon(QIcon(":/icons/search-light.svg"));
+            connect(searchBtn, &QPushButton::clicked,
+                    this, &GalleryWindow::searchBtnClicked);
 
             viewTypeCBox = new QComboBox(topFrame);
             QStringList viewTypes = {"Small", "Medium", "Large", "V. Large"};
@@ -74,8 +78,20 @@ void GalleryWindow::populateCBox(QComboBox &cbox,
     cbox.setCurrentText(current);
 }
 
+void GalleryWindow::updateStatusBar(const QString &msg){
 
+    statusBar()->showMessage(msg);
+}
 
+void GalleryWindow::searchBtnClicked(){
+
+    IOManager io;
+
+    connect(&io, &IOManager::IOFailure,
+            this, &GalleryWindow::updateStatusBar);
+
+    io.processDirAsync(currentDirLnEdt->text());
+}
 
 
 

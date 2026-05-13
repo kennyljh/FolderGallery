@@ -44,6 +44,12 @@ class GalleryWindow : public QMainWindow{
          * @param current
          */
         void populateCBox(QComboBox &cbox, QStringList &list, QString &current);
+
+    private slots:
+        void updateStatusBar(const QString &msg);
+
+        void searchBtnClicked();
+
 };
 
 #endif // GALLERYWINDOW_H
