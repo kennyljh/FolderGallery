@@ -10,13 +10,15 @@ SOURCES += \
     directorycard.cpp \
     folderwindow.cpp \
     gallerywindow.cpp \
-    guiutil.cpp
+    guiutil.cpp \
+    iomanager.cpp
 
 HEADERS += \
     directorycard.h \
     folderwindow.h \
     gallerywindow.h \
-    guiutil.h
+    guiutil.h \
+    iomanager.h
 
 RESOURCES += \
     resources.qrc
