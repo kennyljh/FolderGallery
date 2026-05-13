@@ -15,13 +15,14 @@ void IOManager::processDirAsync(const QString &absolutePath){
     QThreadPool::globalInstance()->start([this, absolutePath]() {
 
         if (!QDir(absolutePath).exists()){
+
             QMetaObject::invokeMethod(this, [this](){
                 emit IOFailure("Directory does not exists.");
             }, Qt::QueuedConnection);
             return;
         }
 
-        QMap<QString, folderBundle*> namesToFolderBundles;
+        QMap<QString, folderBundle> namesToFolderBundles;
 
         QDir dir(absolutePath);
         QFileInfoList folderList = dir.entryInfoList(QDir::AllDirs |
@@ -33,18 +34,23 @@ void IOManager::processDirAsync(const QString &absolutePath){
             QDir folderDir(folder.absoluteFilePath());
             QFileInfoList fileList = folderDir.entryInfoList(QDir::Files,
                                                      QDir::Name);
-            folderBundle *bundle = new folderBundle();
-            bundle->folderInfo = &folder;
-            bundle->filesInfos = &fileList;
+            folderBundle bundle;
+            bundle.folderInfo = folder;
+            bundle.filesInfos = fileList;
 
             namesToFolderBundles.insert(folder.baseName(), bundle);
 
             qDebug() << "Found folder: " + folder.baseName() + " with " +
                         QString::number(fileList.size()) + " files";
         }
+
+        QMetaObject::invokeMethod(this, [this, folderList, namesToFolderBundles](){
+
+            dirProcessDone(namesToFolderBundles);
+            emit IOSuccess("Found " + QString::number(folderList.length()) + " folders.");
+        }, Qt::QueuedConnection);
     });
 }
-
 
 
 

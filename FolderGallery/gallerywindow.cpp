@@ -85,12 +85,14 @@ void GalleryWindow::updateStatusBar(const QString &msg){
 
 void GalleryWindow::searchBtnClicked(){
 
-    IOManager io;
+    IOManager *io = new IOManager(this);
 
-    connect(&io, &IOManager::IOFailure,
+    connect(io, &IOManager::IOFailure,
+            this, &GalleryWindow::updateStatusBar);
+    connect(io, &IOManager::IOSuccess,
             this, &GalleryWindow::updateStatusBar);
 
-    io.processDirAsync(currentDirLnEdt->text());
+    io->processDirAsync(currentDirLnEdt->text());
 }
 
 

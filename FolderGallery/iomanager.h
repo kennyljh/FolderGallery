@@ -19,17 +19,19 @@ class IOManager : public QObject {
         explicit IOManager(QWidget *parent = nullptr);
 
         struct folderBundle {
-            QFileInfo *folderInfo;
-            QFileInfoList *filesInfos;
+            QFileInfo folderInfo;
+            QFileInfoList filesInfos;
         };
 
         void processDirAsync(const QString &absolutePath);
     private:
 
     signals:
-        void dirProcessDone(const QMap<QString, folderBundle*> &namesToFolderBundles);
+        void dirProcessDone(const QMap<QString, folderBundle> &namesToFolderBundles);
 
         void IOFailure(const QString &msg);
+
+        void IOSuccess(const QString &msg);
 };
 
 #endif // IOMANAGER_H

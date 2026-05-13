@@ -13,6 +13,7 @@
 #include <QComboBox>
 #include <QStringList>
 #include <QString>
+#include "iomanager.h"
 
 class GalleryWindow : public QMainWindow{
     Q_OBJECT
@@ -49,6 +50,10 @@ class GalleryWindow : public QMainWindow{
         void updateStatusBar(const QString &msg);
 
         void searchBtnClicked();
+
+    public slots:
+        void processFolders(const QMap<QString,
+                            IOManager::folderBundle> &namesToFolderBundles);
 
 };
 
