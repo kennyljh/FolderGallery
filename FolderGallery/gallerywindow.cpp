@@ -13,7 +13,9 @@
 #include <QList>
 #include <QDebug>
 #include <QStatusBar>
+#include <QListWidgetItem>
 #include "iomanager.h"
+#include "directorycard.h"
 
 GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
 
@@ -60,6 +62,7 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
         galleryLayout->setContentsMargins(0, 0, 0, 0);
             galleryLWidget = new QListWidget(galleryFrame);
             galleryLWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+            galleryLWidget->setViewMode(QListView::IconMode);
         galleryLayout->addWidget(galleryLWidget);
 
     centralLayout->addWidget(topFrame);
@@ -91,11 +94,32 @@ void GalleryWindow::searchBtnClicked(){
             this, &GalleryWindow::updateStatusBar);
     connect(io, &IOManager::IOSuccess,
             this, &GalleryWindow::updateStatusBar);
+    connect(io, &IOManager::dirProcessDone,
+            this, &GalleryWindow::processFolders);
 
     io->processDirAsync(currentDirLnEdt->text());
 }
 
+void GalleryWindow::processFolders(const QMap<QString,
+                            IOManager::folderBundle> &namesToFolderBundles){
 
+    for (const auto &name : namesToFolderBundles.keys()){
+
+        IOManager::folderBundle bundle = namesToFolderBundles.value(name);
+        // todo - temporary check
+        if (bundle.filesInfos.isEmpty()) continue;
+        DirectoryCard *card = new DirectoryCard(bundle.folderInfo,
+                                                bundle.filesInfos,
+                                                galleryLWidget);
+        // card->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+        QListWidgetItem *item = new QListWidgetItem(name);
+        galleryLWidget->addItem(item);
+        galleryLWidget->setItemWidget(item, card);
+        qDebug() << "Displaying folder " + name;
+        return;
+    }
+}
 
 
 
