@@ -173,6 +173,8 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
 
     cardReset();
     this->namesToFolderBundles = namesToFolderBundles;
+
+    generateSessionID();
     int currentSession = threadSession;
 
     qDebug() << "Staring thread session: " + QString::number(threadSession);
@@ -205,7 +207,6 @@ void GalleryWindow::viewTypeChanged(){
         qDebug() << "No folders found";
         return;
     }
-    generateSessionID();
     processFoldersAsync(namesToFolderBundles);
 }
 
@@ -220,8 +221,9 @@ void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
 
     // omit processing cards from different session
     if (sessionID != threadSession){
-        qDebug() << "Thread session: " + QString::number(sessionID) +
+        qDebug() << "Skipping thread. Thread session: " + QString::number(sessionID) +
                     " different from current session: " + QString::number(threadSession);
+        return;
     }
 
     int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());

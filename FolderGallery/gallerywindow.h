@@ -88,6 +88,10 @@ class GalleryWindow : public QMainWindow{
          */
         void cardReset();
 
+        /**
+         * @brief generateSessionID - generates different session id
+         * from current and assigns it
+         */
         void generateSessionID();
 
     protected:
