@@ -13,7 +13,7 @@ class DirectoryCard : public QFrame{
     Q_OBJECT
     public:
         explicit DirectoryCard(QFileInfo &folderInfo, QFileInfoList &filesInfos,
-                                QWidget *parent);
+                                int &width, QWidget *parent);
     private:
         QFileInfo folderInfo;
         QFileInfoList filesInfos;
@@ -21,6 +21,8 @@ class DirectoryCard : public QFrame{
         QVBoxLayout *mainLayout;
         QLabel *imageLabel;
         QLabel *nameLabel;
+
+    //todo - add a truncate func based on viewtype
 };
 
 #endif // DIRECTORYCARD_H

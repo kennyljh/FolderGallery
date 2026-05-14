@@ -8,10 +8,8 @@
 #include <QPixmap>
 
 DirectoryCard::DirectoryCard(QFileInfo &folderInfo, QFileInfoList &filesInfos,
-                                QWidget *parent)
+                                int &width, QWidget *parent)
               : QFrame(parent){
-    // todo - add width to param
-    int width = 135;
 
     this->folderInfo = folderInfo;
     this->filesInfos = filesInfos;

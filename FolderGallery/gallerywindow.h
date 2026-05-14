@@ -23,10 +23,21 @@ class GalleryWindow : public QMainWindow{
         explicit GalleryWindow(QWidget *parent = 0);
 
     private:
+        QStringList viewTypes = {"Small", "Medium", "Large", "V. Large"};
+
         QList<QString> imageSuffixList = {"bmp", "cur", "gif", "ico",
                                             "jfif", "jpeg", "jpg", "pbm",
                                             "pgm", "png", "ppm", "svg",
                                             "svgz", "xbm", "xpm"};
+
+        QMap<QString, int> iconSizeToVal = {
+            {viewTypes[0], 90},
+            {viewTypes[1], 135},
+            {viewTypes[2], 210},
+            {viewTypes[3], 340}
+        };
+
+        QMap<QString, IOManager::folderBundle> namesToFolderBundles;
 
         QFrame *centralFrame;
         QVBoxLayout *centralLayout;
@@ -63,6 +74,10 @@ class GalleryWindow : public QMainWindow{
     public slots:
         void processFolders(const QMap<QString,
                             IOManager::folderBundle> &namesToFolderBundles);
+
+        void viewTypeChanged();
+
+
 
 };
 

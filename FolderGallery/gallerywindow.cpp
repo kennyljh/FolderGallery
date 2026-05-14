@@ -37,8 +37,9 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
                     this, &GalleryWindow::searchBtnClicked);
 
             viewTypeCBox = new QComboBox(topFrame);
-            QStringList viewTypes = {"Small", "Medium", "Large", "V. Large"};
             populateCBox(*viewTypeCBox, viewTypes, viewTypes[1]);
+            connect(viewTypeCBox, &QComboBox::activated,
+                        this, &GalleryWindow::viewTypeChanged);
 
             sortCBox = new QComboBox(topFrame);
             QStringList sortTypes = {"None",
@@ -60,11 +61,11 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
         galleryFrame = new QFrame(centralFrame);
         galleryLayout = new QVBoxLayout(galleryFrame);
         galleryLayout->setContentsMargins(0, 0, 0, 0);
+        galleryLayout->setAlignment(Qt::AlignHCenter);
             galleryLWidget = new QListWidget(galleryFrame);
             galleryLWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
             galleryLWidget->setViewMode(QListView::IconMode);
             galleryLWidget->setResizeMode(QListView::Adjust);
-            galleryLWidget->setItemAlignment(Qt::AlignHCenter);
         galleryLayout->addWidget(galleryLWidget);
 
     centralLayout->addWidget(topFrame);
@@ -111,17 +112,21 @@ void GalleryWindow::searchBtnClicked(){
 }
 
 void GalleryWindow::processFolders(const QMap<QString,
-                            IOManager::folderBundle> &namesToFolderBundles){
+                                    IOManager::folderBundle> &namesToFolderBundles){
 
     galleryLWidget->clear();
+
+    this->namesToFolderBundles = namesToFolderBundles;
 
     for (const auto &name : namesToFolderBundles.keys()){
 
         IOManager::folderBundle bundle = namesToFolderBundles.value(name);
         if (bundle.filesInfos.isEmpty() || !containsImage(bundle.filesInfos)) continue;
 
+        int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
         DirectoryCard *card = new DirectoryCard(bundle.folderInfo,
                                                 bundle.filesInfos,
+                                                cardWidth,
                                                 galleryLWidget);
 
         QListWidgetItem *item = new QListWidgetItem(galleryLWidget);
@@ -131,7 +136,14 @@ void GalleryWindow::processFolders(const QMap<QString,
     }
 }
 
+void GalleryWindow::viewTypeChanged(){
 
+    if (namesToFolderBundles.isEmpty()){
+        qDebug() << "No folders found";
+        return;
+    }
+    processFolders(namesToFolderBundles);
+}
 
 
 
