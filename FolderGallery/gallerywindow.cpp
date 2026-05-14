@@ -16,6 +16,7 @@
 #include <QListWidgetItem>
 #include <QSize>
 #include <QTimer>
+#include <QThreadPool>
 #include "iomanager.h"
 #include "directorycard.h"
 
@@ -28,6 +29,8 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
 
     connect(resizeTimer, &QTimer::timeout,
                 this, &GalleryWindow::windowResized);
+    connect(this, &GalleryWindow::cardReady,
+                this, &GalleryWindow::cardReadyToInsert);
 
     // TODO: Logic for loading enough items
 
@@ -145,34 +148,41 @@ void GalleryWindow::searchBtnClicked(){
     connect(io, &IOManager::IOSuccess,
             this, &GalleryWindow::updateStatusBar);
     connect(io, &IOManager::dirProcessDone,
-            this, &GalleryWindow::processFolders);
+            this, &GalleryWindow::processFoldersAsync);
 
     io->processDirAsync(currentDirLnEdt->text());
 }
 
-void GalleryWindow::processFolders(const QMap<QString,
+void GalleryWindow::processFoldersAsync(const QMap<QString,
                                     IOManager::folderBundle> &namesToFolderBundles){
 
     cardReset();
 
-    this->namesToFolderBundles = namesToFolderBundles;
+    QThreadPool::globalInstance()->start([this, namesToFolderBundles](){
 
-    for (const auto &name : namesToFolderBundles.keys()){
+        this->namesToFolderBundles = namesToFolderBundles;
+        // todo - change to follow number of cards needed to insert
+        for (const auto &name : namesToFolderBundles.keys()){
 
-        IOManager::folderBundle bundle = namesToFolderBundles.value(name);
-        if (bundle.filesInfos.isEmpty() || !containsImage(bundle.filesInfos)) continue;
+            IOManager::folderBundle bundle = namesToFolderBundles.value(name);
+            if (bundle.filesInfos.isEmpty() || !containsImage(bundle.filesInfos)) return;
 
-        int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
-        DirectoryCard *card = new DirectoryCard(bundle.folderInfo,
-                                                bundle.filesInfos,
-                                                cardWidth,
-                                                galleryLWidget);
+            int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
 
-        QListWidgetItem *item = new QListWidgetItem(galleryLWidget);
-        item->setSizeHint(card->sizeHint());
-        galleryLWidget->setItemWidget(item, card);
-        qDebug() << "Displaying folder: " + name;
-    }
+            DirectoryCard *card = new DirectoryCard(bundle.folderInfo,
+                                                    bundle.filesInfos,
+                                                    cardWidth,
+                                                    galleryLWidget);
+
+            QListWidgetItem *item = new QListWidgetItem(galleryLWidget);
+            item->setSizeHint(card->sizeHint());
+
+            QMetaObject::invokeMethod(this, [this, name, card, item](){
+                qDebug() << "Displaying folder: " + name;
+                emit cardReadyToInsert(card, item);
+            });
+        }
+    });
 }
 
 void GalleryWindow::viewTypeChanged(){
@@ -181,7 +191,7 @@ void GalleryWindow::viewTypeChanged(){
         qDebug() << "No folders found";
         return;
     }
-    processFolders(namesToFolderBundles);
+    processFoldersAsync(namesToFolderBundles);
 }
 
 void GalleryWindow::windowResized(){
@@ -190,7 +200,10 @@ void GalleryWindow::windowResized(){
     calculateCardCount(size);
 }
 
+void GalleryWindow::cardReadyToInsert(DirectoryCard *card, QListWidgetItem *item){
 
+    galleryLWidget->setItemWidget(item, card);
+}
 
 
 

@@ -18,6 +18,7 @@
 #include <QResizeEvent>
 #include <QTimer>
 #include "iomanager.h"
+#include "directorycard.h"
 
 class GalleryWindow : public QMainWindow{
     Q_OBJECT
@@ -95,12 +96,22 @@ class GalleryWindow : public QMainWindow{
 
         void searchBtnClicked();
 
-        void processFolders(const QMap<QString,
+        /**
+         * @brief processFoldersAsync - processes folders and displays
+         * cards of it when ready to insert into appropriate frame
+         * @param namesToFolderBundles
+         */
+        void processFoldersAsync(const QMap<QString,
                             IOManager::folderBundle> &namesToFolderBundles);
 
         void viewTypeChanged();
 
         void windowResized();
+
+        void cardReadyToInsert(DirectoryCard *card, QListWidgetItem *item);
+
+    signals:
+        void cardReady(DirectoryCard *card, QListWidgetItem *item);
 };
 
 #endif // GALLERYWINDOW_H
