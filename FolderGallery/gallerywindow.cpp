@@ -22,6 +22,7 @@
 #include <QImage>
 #include <QImageReader>
 #include <QSize>
+#include <QScrollBar>
 #include "iomanager.h"
 #include "directorycard.h"
 
@@ -32,8 +33,13 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
     resizeTimer = new QTimer(this);
     resizeTimer->setSingleShot(true);
 
+    cardRenderTimer = new QTimer(this);
+    cardRenderTimer->setSingleShot(true);
+
     connect(resizeTimer, &QTimer::timeout,
                 this, &GalleryWindow::windowResized);
+    connect(cardRenderTimer, &QTimer::timeout,
+                this, &GalleryWindow::cardRenderComplete);
     connect(this, &GalleryWindow::cardReady,
                 this, &GalleryWindow::cardInsert);
 
@@ -103,8 +109,6 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
     centralLayout->setAlignment(Qt::AlignTop);
 
     setCentralWidget(centralFrame);
-
-
 }
 
 void GalleryWindow::populateCBox(QComboBox &cbox,
@@ -157,14 +161,14 @@ void GalleryWindow::generateSessionID(){
     while (!idGenerated);
 }
 
-void GalleryWindow::updateStatusBar(const QString &msg){
-
-    statusBar()->showMessage(msg);
-}
-
 void GalleryWindow::resizeEvent(QResizeEvent *event){
 
     resizeTimer->start(500);
+}
+
+void GalleryWindow::updateStatusBar(const QString &msg){
+
+    statusBar()->showMessage(msg);
 }
 
 void GalleryWindow::searchBtnClicked(){
@@ -328,11 +332,17 @@ void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
 
     qDebug() << "Displaying folder: " + name;
     galleryLWidget->setItemWidget(item, card);
-
     qDebug() << "Number of folders: " + QString::number(galleryLWidget->count());
+
+    cardRenderStatus = true;
+    cardRenderTimer->start(1000);
 }
 
+void GalleryWindow::cardRenderComplete(){
 
+    cardRenderStatus = false;
+    qDebug() << "All cards rendered";
+}
 
 
 

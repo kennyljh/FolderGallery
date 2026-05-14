@@ -50,7 +50,10 @@ class GalleryWindow : public QMainWindow{
          */
         int threadSession;
 
+        bool cardRenderStatus = false;
+
         QTimer *resizeTimer;
+        QTimer *cardRenderTimer;
 
         QFrame *centralFrame;
         QVBoxLayout *centralLayout;
@@ -149,9 +152,14 @@ class GalleryWindow : public QMainWindow{
         void cardInsert(IOManager::folderBundle bundle, QPixmap pix,
                         int cardWidth, QString name, int sessionID);
 
+        void cardRenderComplete();
+
+        //void scrollBarValueChanged(const int &value);
+
     signals:
         void cardReady(IOManager::folderBundle bundle, QPixmap pix,
                         int cardWidth, QString name, int sessionID);
+
 };
 
 #endif // GALLERYWINDOW_H
