@@ -15,6 +15,8 @@
 #include <QString>
 #include <QFileInfoList>
 #include <QList>
+#include <QResizeEvent>
+#include <QTimer>
 #include "iomanager.h"
 
 class GalleryWindow : public QMainWindow{
@@ -38,6 +40,11 @@ class GalleryWindow : public QMainWindow{
         };
 
         QMap<QString, IOManager::folderBundle> namesToFolderBundles;
+        int maxCardsPerRow;
+        int maxRows;
+        int currentCards;
+
+        QTimer *resizeTimer;
 
         QFrame *centralFrame;
         QVBoxLayout *centralLayout;
@@ -66,19 +73,34 @@ class GalleryWindow : public QMainWindow{
 
         bool containsImage(QFileInfoList &fileList);
 
+        void calculateCardCount(const QSize &size);
+
+        /**
+         * @brief cardReset - resets all cards and other values
+         * that are depended by it
+         */
+        void cardReset();
+
+    protected:
+        /**
+         * @brief resizeEvent - will trigger at every instance
+         * of resize, a QTimer is connected to ensure that
+         * size is only processed every 500ms
+         * @param event
+         */
+        void resizeEvent(QResizeEvent *event) override;
+
     private slots:
         void updateStatusBar(const QString &msg);
 
         void searchBtnClicked();
 
-    public slots:
         void processFolders(const QMap<QString,
                             IOManager::folderBundle> &namesToFolderBundles);
 
         void viewTypeChanged();
 
-
-
+        void windowResized();
 };
 
 #endif // GALLERYWINDOW_H

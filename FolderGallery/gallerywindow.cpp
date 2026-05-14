@@ -14,12 +14,34 @@
 #include <QDebug>
 #include <QStatusBar>
 #include <QListWidgetItem>
+#include <QSize>
+#include <QTimer>
 #include "iomanager.h"
 #include "directorycard.h"
 
 GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
 
     resize(1280, 720);
+
+    resizeTimer = new QTimer(this);
+    resizeTimer->setSingleShot(true);
+
+    connect(resizeTimer, &QTimer::timeout,
+                this, &GalleryWindow::windowResized);
+
+    // TODO: Logic for loading enough items
+
+    // need:
+    // viewport width
+    // current widget size = 130
+    // amount to show view.width / widget.size
+
+
+    // use to calculate amount to show per row
+    // if 80% scrollbar, add 2/3 more rows. (add to total, keep track of current)
+    // Always keep track of total to show
+
+    // if sort, reset.
 
     centralFrame = new QFrame(this);
     centralLayout = new QVBoxLayout(centralFrame);
@@ -38,7 +60,7 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
 
             viewTypeCBox = new QComboBox(topFrame);
             populateCBox(*viewTypeCBox, viewTypes, viewTypes[1]);
-            connect(viewTypeCBox, &QComboBox::activated,
+            connect(viewTypeCBox, &QComboBox::currentIndexChanged,
                         this, &GalleryWindow::viewTypeChanged);
 
             sortCBox = new QComboBox(topFrame);
@@ -92,9 +114,26 @@ bool GalleryWindow::containsImage(QFileInfoList &fileList){
     return false;
 }
 
+void GalleryWindow::calculateCardCount(const QSize &size){
+
+    qDebug() << "Current height" + QString::number(size.height());
+    qDebug() << "Current width" + QString::number(size.width());
+}
+
+void GalleryWindow::cardReset(){
+
+    galleryLWidget->clear();
+    currentCards = 0;
+}
+
 void GalleryWindow::updateStatusBar(const QString &msg){
 
     statusBar()->showMessage(msg);
+}
+
+void GalleryWindow::resizeEvent(QResizeEvent *event){
+
+    resizeTimer->start(500);
 }
 
 void GalleryWindow::searchBtnClicked(){
@@ -114,7 +153,7 @@ void GalleryWindow::searchBtnClicked(){
 void GalleryWindow::processFolders(const QMap<QString,
                                     IOManager::folderBundle> &namesToFolderBundles){
 
-    galleryLWidget->clear();
+    cardReset();
 
     this->namesToFolderBundles = namesToFolderBundles;
 
@@ -145,7 +184,11 @@ void GalleryWindow::viewTypeChanged(){
     processFolders(namesToFolderBundles);
 }
 
+void GalleryWindow::windowResized(){
 
+    QSize size = this->size();
+    calculateCardCount(size);
+}
 
 
 
