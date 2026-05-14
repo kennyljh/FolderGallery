@@ -18,6 +18,7 @@
 #include <QTimer>
 #include <QThreadPool>
 #include <QPixmap>
+#include <QRandomGenerator>
 #include "iomanager.h"
 #include "directorycard.h"
 
@@ -30,6 +31,8 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
 
     connect(resizeTimer, &QTimer::timeout,
                 this, &GalleryWindow::windowResized);
+    connect(this, &GalleryWindow::cardReady,
+                this, &GalleryWindow::cardInsert);
 
     // TODO: Logic for loading enough items
 
@@ -128,6 +131,19 @@ void GalleryWindow::cardReset(){
     currentCards = 0;
 }
 
+void GalleryWindow::generateSessionID(){
+
+    bool idGenerated = false;
+    do {
+        int sessionID = QRandomGenerator::global()->generate();
+        if (sessionID != threadSession){
+            threadSession = sessionID;
+            idGenerated = true;
+        }
+    }
+    while (!idGenerated);
+}
+
 void GalleryWindow::updateStatusBar(const QString &msg){
 
     statusBar()->showMessage(msg);
@@ -157,8 +173,11 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
 
     cardReset();
     this->namesToFolderBundles = namesToFolderBundles;
+    int currentSession = threadSession;
 
-    QThreadPool::globalInstance()->start([this, namesToFolderBundles](){
+    qDebug() << "Staring thread session: " + QString::number(threadSession);
+
+    QThreadPool::globalInstance()->start([this, namesToFolderBundles, currentSession](){
 
         // todo - change to follow number of cards needed to insert
         for (const auto &name : namesToFolderBundles.keys()){
@@ -173,22 +192,9 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
                 if (pix.load(file.absoluteFilePath())) break;
             }
 
-            QMetaObject::invokeMethod(this, [this, bundle, pix, name](){
-
-                int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
-
-                DirectoryCard *card = new DirectoryCard(bundle.folderInfo,
-                                                        bundle.filesInfos,
-                                                        cardWidth,
-                                                        pix,
-                                                        galleryLWidget);
-
-                QListWidgetItem *item = new QListWidgetItem(galleryLWidget);
-                item->setSizeHint(card->sizeHint());
-
-                qDebug() << "Displaying folder: " + name;
-                galleryLWidget->setItemWidget(item, card);
-            });
+            QMetaObject::invokeMethod(this, [this, bundle, pix, name, currentSession](){
+                emit cardReady(bundle, pix, name, currentSession);
+            }, Qt::QueuedConnection);
         }
     });
 }
@@ -199,6 +205,7 @@ void GalleryWindow::viewTypeChanged(){
         qDebug() << "No folders found";
         return;
     }
+    generateSessionID();
     processFoldersAsync(namesToFolderBundles);
 }
 
@@ -208,6 +215,29 @@ void GalleryWindow::windowResized(){
     calculateCardCount(size);
 }
 
+void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
+                                QString name, int sessionID){
+
+    // omit processing cards from different session
+    if (sessionID != threadSession){
+        qDebug() << "Thread session: " + QString::number(sessionID) +
+                    " different from current session: " + QString::number(threadSession);
+    }
+
+    int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
+
+    DirectoryCard *card = new DirectoryCard(bundle.folderInfo,
+                                            bundle.filesInfos,
+                                            cardWidth,
+                                            pix,
+                                            galleryLWidget);
+
+    QListWidgetItem *item = new QListWidgetItem(galleryLWidget);
+    item->setSizeHint(card->sizeHint());
+
+    qDebug() << "Displaying folder: " + name;
+    galleryLWidget->setItemWidget(item, card);
+}
 
 
 

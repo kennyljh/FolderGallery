@@ -8,8 +8,8 @@
 #include <QPixmap>
 #include <QFontMetrics>
 
-DirectoryCard::DirectoryCard(QFileInfo folderInfo, QFileInfoList filesInfos,
-                                int width, QPixmap pix, QWidget *parent)
+DirectoryCard::DirectoryCard(QFileInfo &folderInfo, QFileInfoList &filesInfos,
+                                int &width, QPixmap &pix, QWidget *parent)
               : QFrame(parent){
 
     this->folderInfo = folderInfo;

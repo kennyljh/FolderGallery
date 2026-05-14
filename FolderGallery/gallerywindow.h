@@ -45,6 +45,12 @@ class GalleryWindow : public QMainWindow{
         int maxRows;
         int currentCards;
 
+        /**
+         * @brief threadSession - used to identify if current thread
+         * is running on the correct session
+         */
+        int threadSession;
+
         QTimer *resizeTimer;
 
         QFrame *centralFrame;
@@ -82,6 +88,8 @@ class GalleryWindow : public QMainWindow{
          */
         void cardReset();
 
+        void generateSessionID();
+
     protected:
         /**
          * @brief resizeEvent - will trigger at every instance
@@ -107,6 +115,13 @@ class GalleryWindow : public QMainWindow{
         void viewTypeChanged();
 
         void windowResized();
+
+        void cardInsert(IOManager::folderBundle bundle, QPixmap pix,
+                        QString name, int sessionID);
+
+    signals:
+        void cardReady(IOManager::folderBundle bundle, QPixmap pix,
+                        QString name, int sessionID);
 };
 
 #endif // GALLERYWINDOW_H

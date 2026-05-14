@@ -12,8 +12,8 @@
 class DirectoryCard : public QFrame{
     Q_OBJECT
     public:
-        explicit DirectoryCard(QFileInfo folderInfo, QFileInfoList filesInfos,
-                                int width, QPixmap pix, QWidget *parent);
+        explicit DirectoryCard(QFileInfo &folderInfo, QFileInfoList &filesInfos,
+                                int &width, QPixmap &pix, QWidget *parent);
     private:
         QFileInfo folderInfo;
         QFileInfoList filesInfos;
