@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <QIcon>
 #include <QPixmap>
+#include <QFontMetrics>
 
 DirectoryCard::DirectoryCard(QFileInfo folderInfo, QFileInfoList filesInfos,
                                 int width, QPixmap pix, QWidget *parent)
@@ -17,11 +18,16 @@ DirectoryCard::DirectoryCard(QFileInfo folderInfo, QFileInfoList filesInfos,
     mainLayout = new QVBoxLayout(this);
     mainLayout->setAlignment(Qt::AlignHCenter);
         imageLabel = new QLabel(this);
-        QString temp = filesInfos.begin()->absoluteFilePath();
         imageLabel->setPixmap(pix.scaledToWidth(width, Qt::SmoothTransformation));
         QFrame *hline = new QFrame(this);
         hline->setFrameStyle(QFrame::HLine | QFrame::Sunken);
-        nameLabel = new QLabel(folderInfo.baseName(), this);
+        nameLabel = new QLabel(this);
+        QFontMetrics metrics(imageLabel->font());
+        nameLabel->setText(
+            metrics.elidedText(folderInfo.baseName(),
+                                Qt::ElideMiddle,
+                                width)
+        );
         nameLabel->setAlignment(Qt::AlignHCenter);
     mainLayout->addWidget(imageLabel);
     mainLayout->addWidget(hline);

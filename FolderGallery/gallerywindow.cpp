@@ -30,8 +30,6 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
 
     connect(resizeTimer, &QTimer::timeout,
                 this, &GalleryWindow::windowResized);
-    connect(this, &GalleryWindow::cardReady,
-                this, &GalleryWindow::cardReadyToInsert);
 
     // TODO: Logic for loading enough items
 
@@ -158,10 +156,10 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
                                     IOManager::folderBundle> &namesToFolderBundles){
 
     cardReset();
+    this->namesToFolderBundles = namesToFolderBundles;
 
     QThreadPool::globalInstance()->start([this, namesToFolderBundles](){
 
-        this->namesToFolderBundles = namesToFolderBundles;
         // todo - change to follow number of cards needed to insert
         for (const auto &name : namesToFolderBundles.keys()){
 
@@ -190,7 +188,6 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
 
                 qDebug() << "Displaying folder: " + name;
                 galleryLWidget->setItemWidget(item, card);
-                // emit cardReadyToInsert(card, item);
             });
         }
     });
@@ -210,12 +207,6 @@ void GalleryWindow::windowResized(){
     QSize size = this->size();
     calculateCardCount(size);
 }
-
-void GalleryWindow::cardReadyToInsert(DirectoryCard *card, QListWidgetItem *item){
-
-    galleryLWidget->setItemWidget(item, card);
-}
-
 
 
 

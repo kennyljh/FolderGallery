@@ -107,11 +107,6 @@ class GalleryWindow : public QMainWindow{
         void viewTypeChanged();
 
         void windowResized();
-
-        void cardReadyToInsert(DirectoryCard *card, QListWidgetItem *item);
-
-    signals:
-        void cardReady(DirectoryCard *card, QListWidgetItem *item);
 };
 
 #endif // GALLERYWINDOW_H
