@@ -17,6 +17,7 @@
 #include <QSize>
 #include <QTimer>
 #include <QThreadPool>
+#include <QPixmap>
 #include "iomanager.h"
 #include "directorycard.h"
 
@@ -165,21 +166,31 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
         for (const auto &name : namesToFolderBundles.keys()){
 
             IOManager::folderBundle bundle = namesToFolderBundles.value(name);
-            if (bundle.filesInfos.isEmpty() || !containsImage(bundle.filesInfos)) return;
+            if (bundle.filesInfos.isEmpty() || !containsImage(bundle.filesInfos)) continue;
 
-            int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
+            // creating pixmap is expensive work, delegated to worker thread before
+            // creating DirectoryCard
+            QPixmap pix;
+            for (const auto &file : bundle.filesInfos){
+                if (pix.load(file.absoluteFilePath())) break;
+            }
 
-            DirectoryCard *card = new DirectoryCard(bundle.folderInfo,
-                                                    bundle.filesInfos,
-                                                    cardWidth,
-                                                    galleryLWidget);
+            QMetaObject::invokeMethod(this, [this, bundle, pix, name](){
 
-            QListWidgetItem *item = new QListWidgetItem(galleryLWidget);
-            item->setSizeHint(card->sizeHint());
+                int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
 
-            QMetaObject::invokeMethod(this, [this, name, card, item](){
+                DirectoryCard *card = new DirectoryCard(bundle.folderInfo,
+                                                        bundle.filesInfos,
+                                                        cardWidth,
+                                                        pix,
+                                                        galleryLWidget);
+
+                QListWidgetItem *item = new QListWidgetItem(galleryLWidget);
+                item->setSizeHint(card->sizeHint());
+
                 qDebug() << "Displaying folder: " + name;
-                emit cardReadyToInsert(card, item);
+                galleryLWidget->setItemWidget(item, card);
+                // emit cardReadyToInsert(card, item);
             });
         }
     });

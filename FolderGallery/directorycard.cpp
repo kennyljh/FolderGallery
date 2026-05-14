@@ -7,8 +7,8 @@
 #include <QIcon>
 #include <QPixmap>
 
-DirectoryCard::DirectoryCard(QFileInfo &folderInfo, QFileInfoList &filesInfos,
-                                int &width, QWidget *parent)
+DirectoryCard::DirectoryCard(QFileInfo folderInfo, QFileInfoList filesInfos,
+                                int width, QPixmap pix, QWidget *parent)
               : QFrame(parent){
 
     this->folderInfo = folderInfo;
@@ -18,11 +18,6 @@ DirectoryCard::DirectoryCard(QFileInfo &folderInfo, QFileInfoList &filesInfos,
     mainLayout->setAlignment(Qt::AlignHCenter);
         imageLabel = new QLabel(this);
         QString temp = filesInfos.begin()->absoluteFilePath();
-
-        QPixmap pix;
-        for (const auto &file : filesInfos){
-            if (pix.load(file.absoluteFilePath())) break;
-        }
         imageLabel->setPixmap(pix.scaledToWidth(width, Qt::SmoothTransformation));
         QFrame *hline = new QFrame(this);
         hline->setFrameStyle(QFrame::HLine | QFrame::Sunken);
