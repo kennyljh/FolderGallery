@@ -63,6 +63,8 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
             galleryLWidget = new QListWidget(galleryFrame);
             galleryLWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
             galleryLWidget->setViewMode(QListView::IconMode);
+            galleryLWidget->setResizeMode(QListView::Adjust);
+            galleryLWidget->setItemAlignment(Qt::AlignHCenter);
         galleryLayout->addWidget(galleryLWidget);
 
     centralLayout->addWidget(topFrame);
@@ -79,6 +81,14 @@ void GalleryWindow::populateCBox(QComboBox &cbox,
 
     for (const auto &item : list) cbox.addItem(item);
     cbox.setCurrentText(current);
+}
+
+bool GalleryWindow::containsImage(QFileInfoList &fileList){
+
+    for (const auto &file : fileList){
+        if (imageSuffixList.contains(file.suffix())) return true;
+    }
+    return false;
 }
 
 void GalleryWindow::updateStatusBar(const QString &msg){
@@ -103,21 +113,21 @@ void GalleryWindow::searchBtnClicked(){
 void GalleryWindow::processFolders(const QMap<QString,
                             IOManager::folderBundle> &namesToFolderBundles){
 
+    galleryLWidget->clear();
+
     for (const auto &name : namesToFolderBundles.keys()){
 
         IOManager::folderBundle bundle = namesToFolderBundles.value(name);
-        // todo - temporary check
-        if (bundle.filesInfos.isEmpty()) continue;
+        if (bundle.filesInfos.isEmpty() || !containsImage(bundle.filesInfos)) continue;
+
         DirectoryCard *card = new DirectoryCard(bundle.folderInfo,
                                                 bundle.filesInfos,
                                                 galleryLWidget);
-        // card->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
-        QListWidgetItem *item = new QListWidgetItem(name);
-        galleryLWidget->addItem(item);
+        QListWidgetItem *item = new QListWidgetItem(galleryLWidget);
+        item->setSizeHint(card->sizeHint());
         galleryLWidget->setItemWidget(item, card);
-        qDebug() << "Displaying folder " + name;
-        return;
+        qDebug() << "Displaying folder: " + name;
     }
 }
 

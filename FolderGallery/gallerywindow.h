@@ -13,6 +13,8 @@
 #include <QComboBox>
 #include <QStringList>
 #include <QString>
+#include <QFileInfoList>
+#include <QList>
 #include "iomanager.h"
 
 class GalleryWindow : public QMainWindow{
@@ -21,6 +23,11 @@ class GalleryWindow : public QMainWindow{
         explicit GalleryWindow(QWidget *parent = 0);
 
     private:
+        QList<QString> imageSuffixList = {"bmp", "cur", "gif", "ico",
+                                            "jfif", "jpeg", "jpg", "pbm",
+                                            "pgm", "png", "ppm", "svg",
+                                            "svgz", "xbm", "xpm"};
+
         QFrame *centralFrame;
         QVBoxLayout *centralLayout;
 
@@ -45,6 +52,8 @@ class GalleryWindow : public QMainWindow{
          * @param current
          */
         void populateCBox(QComboBox &cbox, QStringList &list, QString &current);
+
+        bool containsImage(QFileInfoList &fileList);
 
     private slots:
         void updateStatusBar(const QString &msg);

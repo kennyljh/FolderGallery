@@ -5,22 +5,33 @@
 #include <QVBoxLayout>
 #include <QLabel>
 #include <QIcon>
+#include <QPixmap>
 
 DirectoryCard::DirectoryCard(QFileInfo &folderInfo, QFileInfoList &filesInfos,
                                 QWidget *parent)
               : QFrame(parent){
-
-    int width = 100;
-    resize(width, width * 1.414);
+    // todo - add width to param
+    int width = 135;
 
     this->folderInfo = folderInfo;
     this->filesInfos = filesInfos;
 
     mainLayout = new QVBoxLayout(this);
+    mainLayout->setAlignment(Qt::AlignHCenter);
         imageLabel = new QLabel(this);
-        imageLabel->setPixmap(QIcon(filesInfos.begin()->absoluteFilePath()).pixmap(100, 141));
+        QString temp = filesInfos.begin()->absoluteFilePath();
+
+        QPixmap pix;
+        for (const auto &file : filesInfos){
+            if (pix.load(file.absoluteFilePath())) break;
+        }
+        imageLabel->setPixmap(pix.scaledToWidth(width, Qt::SmoothTransformation));
+        QFrame *hline = new QFrame(this);
+        hline->setFrameStyle(QFrame::HLine | QFrame::Sunken);
         nameLabel = new QLabel(folderInfo.baseName(), this);
+        nameLabel->setAlignment(Qt::AlignHCenter);
     mainLayout->addWidget(imageLabel);
+    mainLayout->addWidget(hline);
     mainLayout->addWidget(nameLabel);
 
 }
