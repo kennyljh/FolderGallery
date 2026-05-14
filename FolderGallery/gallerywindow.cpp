@@ -298,6 +298,7 @@ void GalleryWindow::windowResized(){
 
     QSize size = this->size();
     calculateMaxCardCount(size, 2);
+    addFoldersAsync(namesToFolderBundles);
 }
 
 void GalleryWindow::cardResized(){

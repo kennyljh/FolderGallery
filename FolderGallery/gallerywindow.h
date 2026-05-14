@@ -124,7 +124,8 @@ class GalleryWindow : public QMainWindow{
         /**
          * @brief processFoldersAsync - processes folders and displays
          * cards of it when ready to insert into appropriate frame
-         * Stops at maxCards
+         *
+         * Does a card reset. Stops at maxCards.
          * @param namesToFolderBundles
          */
         void processFoldersAsync(const QMap<QString,

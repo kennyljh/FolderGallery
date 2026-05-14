@@ -14,7 +14,7 @@ void IOManager::processDirAsync(const QString &absolutePath){
 
     QThreadPool::globalInstance()->start([this, absolutePath]() {
 
-        if (!QDir(absolutePath).exists()){
+        if (absolutePath.isEmpty() || !QDir(absolutePath).exists()){
 
             QMetaObject::invokeMethod(this, [this](){
                 emit IOFailure("Directory does not exists.");
