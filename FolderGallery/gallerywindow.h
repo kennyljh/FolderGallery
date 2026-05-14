@@ -41,9 +41,8 @@ class GalleryWindow : public QMainWindow{
         };
 
         QMap<QString, IOManager::folderBundle> namesToFolderBundles;
-        int maxCardsPerRow;
-        int maxRows;
         int currentCards;
+        int maxCards;
 
         /**
          * @brief threadSession - used to identify if current thread
@@ -80,7 +79,21 @@ class GalleryWindow : public QMainWindow{
 
         bool containsImage(QFileInfoList &fileList);
 
-        void calculateCardCount(const QSize &size);
+        /**
+         * @brief calculateMaxCardCount - calculates the maximum number of
+         * cards to display based on cards per row and rows to display
+         * @param size
+         */
+        void calculateMaxCardCount(const QSize &size);
+
+        /**
+         * @brief calculateMaxCardCount - calculates the maximum number of
+         * cards to display based on cards per row and rows to display, also
+         * adds slack rows
+         * @param size
+         * @param extraRows
+         */
+        void calculateMaxCardCount(const QSize &size, int slackRows);
 
         /**
          * @brief cardReset - resets all cards and other values
@@ -111,14 +124,25 @@ class GalleryWindow : public QMainWindow{
         /**
          * @brief processFoldersAsync - processes folders and displays
          * cards of it when ready to insert into appropriate frame
+         * Stops at maxCards
          * @param namesToFolderBundles
          */
         void processFoldersAsync(const QMap<QString,
                             IOManager::folderBundle> &namesToFolderBundles);
 
+        /**
+         * @brief addFoldersAsync - processes folders and adds more
+         * cards starting from currentCard
+         * @param namesToFolderBundles
+         */
+        void addFoldersAsync(const QMap<QString,
+                            IOManager::folderBundle> &namesToFolderBundles);
+
         void viewTypeChanged();
 
         void windowResized();
+
+        void cardResized();
 
         void cardInsert(IOManager::folderBundle bundle, QPixmap pix,
                         int cardWidth, QString name, int sessionID);

@@ -37,7 +37,7 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
     connect(this, &GalleryWindow::cardReady,
                 this, &GalleryWindow::cardInsert);
 
-    // TODO: Logic for loading enough items
+    // TODO: Logic for loading enough items (wait all items loaded until add more)
 
     // need:
     // viewport width
@@ -122,10 +122,20 @@ bool GalleryWindow::containsImage(QFileInfoList &fileList){
     return false;
 }
 
-void GalleryWindow::calculateCardCount(const QSize &size){
+void GalleryWindow::calculateMaxCardCount(const QSize &size, int slackRows){
 
-    qDebug() << "Current height" + QString::number(size.height());
-    qDebug() << "Current width" + QString::number(size.width());
+    int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
+    // account for margins of directory cards
+    int cardsPerRow = size.width() / (cardWidth + 10);
+    // account for qlabel of directory cards
+    int rowsToDisplay = size.height() / ((cardWidth + 30) * 1.414);
+    // to give the illusion that more images are loaded but not all for startup
+
+    rowsToDisplay += slackRows;
+    maxCards = cardsPerRow * rowsToDisplay;
+
+    qDebug() << "Window width: " + QString::number(size.width()) + ", height: " +
+                QString::number(size.height()) + ", maxCards: " + QString::number(maxCards);
 }
 
 void GalleryWindow::cardReset(){
@@ -190,6 +200,9 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
             IOManager::folderBundle bundle = namesToFolderBundles.value(name);
             if (bundle.filesInfos.isEmpty() || !containsImage(bundle.filesInfos)) continue;
 
+            // only process until maxCards
+            if (++currentCards > maxCards) break;
+
             int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
 
             // creating pixmap is expensive work, delegated to worker thread before
@@ -224,13 +237,20 @@ void GalleryWindow::viewTypeChanged(){
         qDebug() << "No folders found";
         return;
     }
+    cardResized();
     processFoldersAsync(namesToFolderBundles);
 }
 
 void GalleryWindow::windowResized(){
 
     QSize size = this->size();
-    calculateCardCount(size);
+    calculateMaxCardCount(size, 2);
+}
+
+void GalleryWindow::cardResized(){
+
+    QSize size = this->size();
+    calculateMaxCardCount(size, 2);
 }
 
 void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
@@ -254,6 +274,8 @@ void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
 
     qDebug() << "Displaying folder: " + name;
     galleryLWidget->setItemWidget(item, card);
+
+    qDebug() << "Number of folders: " + QString::number(galleryLWidget->count());
 }
 
 
