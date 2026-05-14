@@ -33,7 +33,7 @@ void IOManager::processDirAsync(const QString &absolutePath){
 
             QDir folderDir(folder.absoluteFilePath());
             QFileInfoList fileList = folderDir.entryInfoList(QDir::Files,
-                                                     QDir::Name);
+                                                             QDir::Name);
             folderBundle bundle;
             bundle.folderInfo = folder;
             bundle.filesInfos = fileList;

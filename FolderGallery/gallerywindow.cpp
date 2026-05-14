@@ -19,6 +19,9 @@
 #include <QThreadPool>
 #include <QPixmap>
 #include <QRandomGenerator>
+#include <QImage>
+#include <QImageReader>
+#include <QSize>
 #include "iomanager.h"
 #include "directorycard.h"
 
@@ -187,15 +190,29 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
             IOManager::folderBundle bundle = namesToFolderBundles.value(name);
             if (bundle.filesInfos.isEmpty() || !containsImage(bundle.filesInfos)) continue;
 
+            int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
+
             // creating pixmap is expensive work, delegated to worker thread before
             // creating DirectoryCard
             QPixmap pix;
             for (const auto &file : bundle.filesInfos){
-                if (pix.load(file.absoluteFilePath())) break;
+
+                // scale down images before reading, otherwise may exceed render limit for
+                // large images
+                QImageReader reader(file.absoluteFilePath());
+                QSize size;
+                size.setWidth(cardWidth);
+                reader.setScaledSize(size);
+
+                QImage image;
+                if (!(image = reader.read()).isNull()){
+                    pix = QPixmap::fromImage(image);
+                    break;
+                }
             }
 
-            QMetaObject::invokeMethod(this, [this, bundle, pix, name, currentSession](){
-                emit cardReady(bundle, pix, name, currentSession);
+            QMetaObject::invokeMethod(this, [this, bundle, pix, cardWidth, name, currentSession](){
+                emit cardReady(bundle, pix, cardWidth, name, currentSession);
             }, Qt::QueuedConnection);
         }
     });
@@ -217,7 +234,7 @@ void GalleryWindow::windowResized(){
 }
 
 void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
-                                QString name, int sessionID){
+                                int cardWidth, QString name, int sessionID){
 
     // omit processing cards from different session
     if (sessionID != threadSession){
@@ -225,8 +242,6 @@ void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
                     " different from current session: " + QString::number(threadSession);
         return;
     }
-
-    int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
 
     DirectoryCard *card = new DirectoryCard(bundle.folderInfo,
                                             bundle.filesInfos,

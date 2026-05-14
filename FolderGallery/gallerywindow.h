@@ -121,11 +121,11 @@ class GalleryWindow : public QMainWindow{
         void windowResized();
 
         void cardInsert(IOManager::folderBundle bundle, QPixmap pix,
-                        QString name, int sessionID);
+                        int cardWidth, QString name, int sessionID);
 
     signals:
         void cardReady(IOManager::folderBundle bundle, QPixmap pix,
-                        QString name, int sessionID);
+                        int cardWidth, QString name, int sessionID);
 };
 
 #endif // GALLERYWINDOW_H
