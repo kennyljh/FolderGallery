@@ -133,6 +133,7 @@ class GalleryWindow : public QMainWindow{
         /**
          * @brief addFoldersAsync - processes folders and adds more
          * cards starting from currentCard
+         *
          * @param namesToFolderBundles
          */
         void addFoldersAsync(const QMap<QString,

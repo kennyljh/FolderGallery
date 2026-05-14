@@ -201,7 +201,10 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
             if (bundle.filesInfos.isEmpty() || !containsImage(bundle.filesInfos)) continue;
 
             // only process until maxCards
-            if (++currentCards > maxCards) break;
+            if (++currentCards > maxCards){
+                currentCards--;
+                break;
+            }
 
             int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
 
@@ -228,6 +231,56 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
                 emit cardReady(bundle, pix, cardWidth, name, currentSession);
             }, Qt::QueuedConnection);
         }
+    });
+}
+
+void GalleryWindow::addFoldersAsync(const QMap<QString,
+                                    IOManager::folderBundle> &namesToFolderBundles){
+
+    if (namesToFolderBundles.isEmpty()) return;
+
+    generateSessionID();
+    int currentSession = threadSession;
+
+    qDebug() << "Staring thread session: " + QString::number(threadSession);
+
+    QThreadPool::globalInstance()->start([this, namesToFolderBundles, currentSession](){
+
+        QList<QString> keys = namesToFolderBundles.keys();
+
+        // only process until new maxCards
+        while (++currentCards < maxCards){
+
+            QString name = keys[currentCards - 1];
+            IOManager::folderBundle bundle = namesToFolderBundles.value(name);
+            if (bundle.filesInfos.isEmpty() || !containsImage(bundle.filesInfos)) continue;
+
+            int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
+
+            // creating pixmap is expensive work, delegated to worker thread before
+            // creating DirectoryCard
+            QPixmap pix;
+            for (const auto &file : bundle.filesInfos){
+
+                // scale down images before reading, otherwise may exceed render limit for
+                // large images
+                QImageReader reader(file.absoluteFilePath());
+                QSize size;
+                size.setWidth(cardWidth);
+                reader.setScaledSize(size);
+
+                QImage image;
+                if (!(image = reader.read()).isNull()){
+                    pix = QPixmap::fromImage(image);
+                    break;
+                }
+            }
+
+            QMetaObject::invokeMethod(this, [this, bundle, pix, cardWidth, name, currentSession](){
+                emit cardReady(bundle, pix, cardWidth, name, currentSession);
+            }, Qt::QueuedConnection);
+        }
+        currentCards--;
     });
 }
 
