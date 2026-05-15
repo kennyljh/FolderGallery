@@ -102,6 +102,8 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
             galleryLWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
             galleryLWidget->setViewMode(QListView::IconMode);
             galleryLWidget->setResizeMode(QListView::Adjust);
+            connect(galleryLWidget->verticalScrollBar(), &QScrollBar::valueChanged,
+                        this, &GalleryWindow::scrollBarValueChanged);
         galleryLayout->addWidget(galleryLWidget);
 
     centralLayout->addWidget(topFrame);
@@ -130,7 +132,7 @@ void GalleryWindow::calculateMaxCardCount(const QSize &size, int slackRows){
 
     int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
     // account for margins of directory cards
-    int cardsPerRow = size.width() / (cardWidth + 10);
+    cardsPerRow = size.width() / (cardWidth + 10);
     // account for qlabel of directory cards
     int rowsToDisplay = size.height() / ((cardWidth + 30) * 1.414);
     // to give the illusion that more images are loaded but not all for startup
@@ -253,7 +255,7 @@ void GalleryWindow::addFoldersAsync(const QMap<QString,
         QList<QString> keys = namesToFolderBundles.keys();
 
         // only process until new maxCards
-        while (++currentCards < maxCards){
+        while (++currentCards <= maxCards){
 
             QString name = keys[currentCards - 1];
             IOManager::folderBundle bundle = namesToFolderBundles.value(name);
@@ -335,16 +337,43 @@ void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
     qDebug() << "Number of folders: " + QString::number(galleryLWidget->count());
 
     cardRenderStatus = true;
-    cardRenderTimer->start(1000);
+    cardRenderTimer->start(500);
 }
 
 void GalleryWindow::cardRenderComplete(){
 
     cardRenderStatus = false;
     qDebug() << "All cards rendered";
+
+    if (galleryLWidget->verticalScrollBar()->value() /
+        galleryLWidget->verticalScrollBar()->maximum() == 1){
+
+        scrollBarValueChanged(galleryLWidget->verticalScrollBar()->value());
+        qDebug() << "Scrollbar maxed out after rendering";
+    }
 }
 
+void GalleryWindow::scrollBarValueChanged(const int &value){
 
+    if (!cardRenderStatus && currentCards > 0 && cardsPerRow > 0){
+
+        int scrollBarMax = galleryLWidget->verticalScrollBar()->maximum();
+        if (value / scrollBarMax < 0.9) return;
+
+        maxCards += 2 * cardsPerRow;
+        qDebug() << "Scrollbar threshold reached. Adding " +
+                    QString::number(2 * cardsPerRow) + " more cards;";
+
+        int maxFolders = namesToFolderBundles.keys().size();
+        if (maxCards > maxFolders) {
+
+            maxCards = maxFolders;
+            return;
+        }
+        qDebug() << "MaxCards update: " + QString::number(maxCards);
+    }
+    addFoldersAsync(namesToFolderBundles);
+}
 
 
 

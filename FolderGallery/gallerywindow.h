@@ -18,7 +18,6 @@
 #include <QResizeEvent>
 #include <QTimer>
 #include "iomanager.h"
-#include "directorycard.h"
 
 class GalleryWindow : public QMainWindow{
     Q_OBJECT
@@ -43,6 +42,7 @@ class GalleryWindow : public QMainWindow{
         QMap<QString, IOManager::folderBundle> namesToFolderBundles;
         int currentCards;
         int maxCards;
+        int cardsPerRow;
 
         /**
          * @brief threadSession - used to identify if current thread
@@ -154,7 +154,7 @@ class GalleryWindow : public QMainWindow{
 
         void cardRenderComplete();
 
-        //void scrollBarValueChanged(const int &value);
+        void scrollBarValueChanged(const int &value);
 
     signals:
         void cardReady(IOManager::folderBundle bundle, QPixmap pix,

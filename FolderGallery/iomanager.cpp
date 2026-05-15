@@ -40,7 +40,7 @@ void IOManager::processDirAsync(const QString &absolutePath){
 
             namesToFolderBundles.insert(folder.baseName(), bundle);
 
-            qDebug() << "Found folder: " + folder.baseName() + " with " +
+            //qDebug() << "Found folder: " + folder.baseName() + " with " +
                         QString::number(fileList.size()) + " files";
         }
 
