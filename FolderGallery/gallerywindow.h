@@ -122,7 +122,7 @@ class GalleryWindow : public QMainWindow{
     private slots:
         void updateStatusBar(const QString &msg);
 
-        void searchBtnClicked();
+        void searchDirStarted();
 
         /**
          * @brief processFoldersAsync - processes folders and displays

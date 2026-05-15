@@ -67,10 +67,13 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
             folderPictureBtn->setIcon(QIcon(":/icons/folder-light.svg"));
             currentDirLnEdt = new QLineEdit(topFrame);
             currentDirLnEdt->setPlaceholderText("Enter folder directory...");
+            connect(currentDirLnEdt, &QLineEdit::returnPressed,
+                        this, &GalleryWindow::searchDirStarted);
+
             searchBtn = new QPushButton(topFrame);
             searchBtn->setIcon(QIcon(":/icons/search-light.svg"));
             connect(searchBtn, &QPushButton::clicked,
-                    this, &GalleryWindow::searchBtnClicked);
+                    this, &GalleryWindow::searchDirStarted);
 
             viewTypeCBox = new QComboBox(topFrame);
             populateCBox(*viewTypeCBox, viewTypes, viewTypes[1]);
@@ -178,7 +181,7 @@ void GalleryWindow::updateStatusBar(const QString &msg){
     statusBar()->showMessage(msg);
 }
 
-void GalleryWindow::searchBtnClicked(){
+void GalleryWindow::searchDirStarted(){
 
     IOManager *io = new IOManager(this);
 
@@ -377,6 +380,7 @@ void GalleryWindow::scrollBarValueChanged(const int &value){
             maxCards = maxFolders;
             return;
         }
+
         qDebug() << "MaxCards update: " + QString::number(maxCards);
         addFoldersAsync(namesToFolderBundles);
     }
