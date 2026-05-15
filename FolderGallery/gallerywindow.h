@@ -43,15 +43,11 @@ class GalleryWindow : public QMainWindow{
 
         /**
          * @brief namesToFolderBundles - mapping of folder names
-         * to folder bundles, contains information on parent dir
+         * to folder bundles, bundles contain information on parent dir
          * and child dirs
          */
         QMap<QString, IOManager::folderBundle> namesToFolderBundles;
 
-        /**
-         * @brief The sessionMetadata class - contains related information
-         * needed to correctly render cards per session
-         */
         struct sessionMetadata{
 
             int threadSession;
@@ -61,6 +57,10 @@ class GalleryWindow : public QMainWindow{
             bool cardRenderStatus = false;
         };
 
+        /**
+         * @brief The sessionMetadata class - contains related information
+         * needed to correctly render cards per session
+         */
         sessionMetadata metadata;
 
         /**
@@ -102,7 +102,7 @@ class GalleryWindow : public QMainWindow{
         void populateCBox(QComboBox &cbox, QStringList &list, QString &current);
 
         /**
-         * @brief cardReset - resets all cards and session metadata
+         * @brief cardReset - clears all widget cards and currentCards value
          */
         void cardReset();
 
@@ -111,8 +111,6 @@ class GalleryWindow : public QMainWindow{
          * startup renders or window size change renders
          */
         void generateNormalSession();
-
-        void generateAddOnSession(int rowIncrease);
 
     protected:
         /**
@@ -132,16 +130,16 @@ class GalleryWindow : public QMainWindow{
         void updateStatusBar(const QString &msg);
 
         /**
-         * @brief searchDirStarted - begin process of iterating
-         * folders and children for rendering
+         * @brief searchDirStarted - makes call to IOManager to process
+         * current directory
          */
         void searchDirStarted();
 
         /**
-         * @brief processFoldersAsync - processes folders into cards and
-         * inserts into appropriate frames.
+         * @brief processFoldersAsync - asynchronous, processes folders into cards
+         * and inserts into appropriate frames.
          *
-         * int mode is used to determine if the current render is a
+         * mode is used to determine if the current render is a
          * reset(0), resize(1), or continued(2)
          * @param namesToFolderBundles
          * @param reset
@@ -157,20 +155,23 @@ class GalleryWindow : public QMainWindow{
         void viewTypeChanged();
 
         /**
-         * @brief windowResized - current window size changed and maxCards
-         * needs updating
+         * @brief windowResized - current window resized, number of cards
+         * rendered needs updating. Cannot proceed if previous render still
+         * ongoing
          */
         void windowResized();
 
         /**
-         * @brief cardInsert - start operation to insert card into widget
+         * @brief cardInsert - begins inserting card into appropriate
+         * widget.
          *
-         * If card session id is expired, then reject. Responsible for
-         * resetting cardRenderTimer everytime a card is rendered.
+         * If inserted card is on an old session, reject. Updates card
+         * render status to true.
          * @param bundle
          * @param pix
+         * @param cardNum
          * @param cardWidth
-         * @param name
+         * @param cardName
          * @param sessionID
          */
         void cardInsert(IOManager::folderBundle bundle, QPixmap pix,
@@ -180,7 +181,7 @@ class GalleryWindow : public QMainWindow{
         /**
          * @brief cardRenderComplete - updates cardRenderStatus
          * on render completion. If scroll bar is maxed out, add
-         * more cards.
+         * more cards
          */
         void cardRenderComplete();
 
@@ -193,12 +194,13 @@ class GalleryWindow : public QMainWindow{
 
     signals:
         /**
-         * @brief cardReady - signals when a card is ready to be
-         * processed into widget.
+         * @brief cardReady - signals when a directory card is ready
+         * to be created
          * @param bundle
          * @param pix
+         * @param cardNum
          * @param cardWidth
-         * @param name
+         * @param cardName
          * @param sessionID
          */
         void cardReady(IOManager::folderBundle bundle, QPixmap pix,

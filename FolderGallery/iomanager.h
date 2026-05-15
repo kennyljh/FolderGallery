@@ -33,6 +33,12 @@ class IOManager : public QObject {
     private:
 
     signals:
+        /**
+         * @brief dirProcessDone - signals when processed folders are ready to
+         * be sent
+         * @param namesToFolderBundles
+         * @param mode
+         */
         void dirProcessDone(const QMap<QString,
                             IOManager::folderBundle> &namesToFolderBundles,
                             int mode);

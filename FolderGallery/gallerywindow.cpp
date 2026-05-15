@@ -221,14 +221,9 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
      * order, hence the ordering of cards will be inconsistent each time.
      *
      * Currently, we put the entire process of iteration into a single thread. This
-     * gives us a nice card pop in effect.
-     *
-     * The drawback to this design is that if we were to start a new process session
-     * while the current one is ongoing, we risk disrupting the value of currentCards
-     * and the number of cards rendered is incorrect.
-     *
-     * For now, this is fixed by not accepting QLineEdit or QComboBox requests if
-     * rendering is ongoing.
+     * gives us a nice card pop in effect. But, render on window resize will not
+     * proceed until current render is complete, otherwise card insertion order will
+     * not be sequential.
      **/
     QThreadPool::globalInstance()->start([this, namesToFolderBundles, currentSession,
                                             currentCards, maxCards](){
