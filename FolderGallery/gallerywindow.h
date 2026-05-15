@@ -49,33 +49,19 @@ class GalleryWindow : public QMainWindow{
         QMap<QString, IOManager::folderBundle> namesToFolderBundles;
 
         /**
-         * @brief currentCards - to keep track of current number
-         * of cards rendered
+         * @brief The sessionMetadata class - contains related information
+         * needed to correctly render cards per session
          */
-        int currentCards;
+        struct sessionMetadata{
 
-        /**
-         * @brief maxCards - max cards that can be rendered
-         */
-        int maxCards;
+            int threadSession;
+            int currentCards = 0;
+            int cardsPerRow = 0;
+            int maxCards = 0;
+            bool cardRenderStatus = false;
+        };
 
-        /**
-         * @brief cardsPerRow - number of cards per row, used
-         * in calculation for increasing maxCards
-         */
-        int cardsPerRow;
-
-        /**
-         * @brief threadSession - used to identify if current thread
-         * is running on the correct session
-         */
-        int threadSession;
-
-        /**
-         * @brief cardRenderStatus - specifies if card rendering
-         * operation is still ongoing
-         */
-        bool cardRenderStatus = false;
+        sessionMetadata metadata;
 
         /**
          * @brief resizeTimer - timer used to ensure that resize
@@ -89,8 +75,6 @@ class GalleryWindow : public QMainWindow{
          * have stopped rendering
          */
         QTimer *cardRenderTimer;
-
-        int viewTypePrevChoice;
 
         QFrame *centralFrame;
         QVBoxLayout *centralLayout;
@@ -118,40 +102,17 @@ class GalleryWindow : public QMainWindow{
         void populateCBox(QComboBox &cbox, QStringList &list, QString &current);
 
         /**
-         * @brief containsImage - checks if the current folder contains
-         * a supported image for card rendering
-         * @param fileList
-         * @return
-         */
-        bool containsImage(QFileInfoList &fileList);
-
-        /**
-         * @brief calculateMaxCardCount - calculates the maximum number of
-         * cards to display based on cards per row and rows to display
-         * @param size
-         */
-        void calculateMaxCardCount(const QSize &size);
-
-        /**
-         * @brief calculateMaxCardCount - calculates the maximum number of
-         * cards to display based on cards per row and rows to display, also
-         * adds slack rows
-         * @param size
-         * @param extraRows
-         */
-        void calculateMaxCardCount(const QSize &size, int slackRows);
-
-        /**
-         * @brief cardReset - resets all cards and other values
-         * that are depended by it
+         * @brief cardReset - resets all cards and session metadata
          */
         void cardReset();
 
         /**
-         * @brief generateSessionID - generates different session id
-         * from current and assigns it
+         * @brief generateNormalSession - session generator for
+         * startup renders or window size change renders
          */
-        void generateSessionID();
+        void generateNormalSession();
+
+        void generateAddOnSession(int rowIncrease);
 
     protected:
         /**
@@ -177,23 +138,15 @@ class GalleryWindow : public QMainWindow{
         void searchDirStarted();
 
         /**
-         * @brief processFoldersAsync - processes folders and displays
-         * cards of it when ready to insert into appropriate frame
-         *
-         * Does a card reset. Stops at maxCards.
+         * @brief processFoldersAsync - processes folders into cards and
+         * inserts into appropriate frames. resetRender boolean is used to
+         * determined if this is a new render or continued render
          * @param namesToFolderBundles
+         * @param reset
          */
         void processFoldersAsync(const QMap<QString,
-                            IOManager::folderBundle> &namesToFolderBundles);
-
-        /**
-         * @brief addFoldersAsync - processes folders and adds more
-         * cards starting from currentCard
-         *
-         * @param namesToFolderBundles
-         */
-        void addFoldersAsync(const QMap<QString,
-                            IOManager::folderBundle> &namesToFolderBundles);
+                                 IOManager::folderBundle> &namesToFolderBundles,
+                                 bool resetRender);
 
         /**
          * @brief viewTypeChanged - card sizes have changed in combo box
@@ -208,12 +161,6 @@ class GalleryWindow : public QMainWindow{
         void windowResized();
 
         /**
-         * @brief cardResized - cards sizes' have changed and maxCards
-         * needs updating
-         */
-        void cardResized();
-
-        /**
          * @brief cardInsert - start operation to insert card into widget
          *
          * If card session id is expired, then reject. Responsible for
@@ -225,7 +172,8 @@ class GalleryWindow : public QMainWindow{
          * @param sessionID
          */
         void cardInsert(IOManager::folderBundle bundle, QPixmap pix,
-                        int cardWidth, QString name, int sessionID);
+                        int cardNum, int cardWidth, QString cardName,
+                        int sessionID);
 
         /**
          * @brief cardRenderComplete - updates cardRenderStatus
@@ -252,7 +200,8 @@ class GalleryWindow : public QMainWindow{
          * @param sessionID
          */
         void cardReady(IOManager::folderBundle bundle, QPixmap pix,
-                        int cardWidth, QString name, int sessionID);
+                        int cardNum, int cardWidth, QString cardName,
+                        int sessionID);
 };
 
 #endif // GALLERYWINDOW_H
