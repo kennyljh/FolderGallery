@@ -148,6 +148,8 @@ void GalleryWindow::cardReset(){
 
     galleryLWidget->clear();
     currentCards = 0;
+    QSize size = this->size();
+    calculateMaxCardCount(size, 2);
 }
 
 void GalleryWindow::generateSessionID(){
@@ -345,8 +347,9 @@ void GalleryWindow::cardRenderComplete(){
     cardRenderStatus = false;
     qDebug() << "All cards rendered";
 
-    if (galleryLWidget->verticalScrollBar()->value() /
-        galleryLWidget->verticalScrollBar()->maximum() == 1){
+    int scrollBarMax = galleryLWidget->verticalScrollBar()->maximum();
+    if (scrollBarMax == 0) return;
+    if ((galleryLWidget->verticalScrollBar()->value() / scrollBarMax) == 1){
 
         scrollBarValueChanged(galleryLWidget->verticalScrollBar()->value());
         qDebug() << "Scrollbar maxed out after rendering";
