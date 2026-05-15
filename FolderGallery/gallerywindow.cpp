@@ -201,7 +201,7 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
     cardReset();
     this->namesToFolderBundles = namesToFolderBundles;
 
-    qDebug() << "Staring thread session: " + QString::number(threadSession);
+    qDebug() << "Staring thread session processFoldersAsync: " + QString::number(threadSession);
 
     QThreadPool::globalInstance()->start([this, namesToFolderBundles, currentSession](){
 
@@ -253,7 +253,7 @@ void GalleryWindow::addFoldersAsync(const QMap<QString,
     generateSessionID();
     int currentSession = threadSession;
 
-    qDebug() << "Staring thread session: " + QString::number(threadSession);
+    qDebug() << "Staring thread session addFoldersAsync: " + QString::number(threadSession);
 
     QThreadPool::globalInstance()->start([this, namesToFolderBundles, currentSession](){
 
@@ -378,8 +378,8 @@ void GalleryWindow::scrollBarValueChanged(const int &value){
             return;
         }
         qDebug() << "MaxCards update: " + QString::number(maxCards);
+        addFoldersAsync(namesToFolderBundles);
     }
-    addFoldersAsync(namesToFolderBundles);
 }
 
 
