@@ -68,11 +68,10 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
                         this, &GalleryWindow::viewTypeChanged);
 
             sortCBox = new QComboBox(topFrame);
-            QStringList sortTypes = {"None",
-                                        "Name (Ascend)",
-                                        "Name (Descend)",
-                                        "Date (Ascend)",
-                                        "Date (Descend)"};
+            QStringList sortTypes = {"Name (Ascend)",
+                                     "Name (Descend)",
+                                     "Date (Ascend)",
+                                     "Date (Descend)"};
             populateCBox(*sortCBox, sortTypes, sortTypes[0]);
 
             settingsBtn = new QPushButton(topFrame);
@@ -200,6 +199,10 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
             break;
         // continued render
         case 2:
+            qDebug() << "Continued session: " + QString::number(metadata.threadSession) +
+                ", currentCards: " + QString::number(metadata.currentCards) +
+                ", cardsPerRow: " + QString::number(metadata.cardsPerRow) +
+                ", maxCards: " + QString::number(metadata.maxCards);
             break;
     }
 
@@ -288,7 +291,7 @@ void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
     // omit processing cards from different session
     if (sessionID != metadata.threadSession){
         qDebug() << "Current thread: " + QString::number(metadata.threadSession) +
-                    "<<< skipped old thread: " + QString::number(sessionID);
+                    " <<< skipped old thread: " + QString::number(sessionID);
         return;
     }
 
