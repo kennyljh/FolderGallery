@@ -1,10 +1,13 @@
 #ifndef GUIUTIL_H
 #define GUIUTIL_H
 
-class GUIUtil
-{
-public:
-    GUIUtil();
+#include <QWidget>
+
+class GUIUtil {
+    public:
+        GUIUtil();
+
+        void applyWidgetFade(QWidget *widget, int duration);
 };
 
 #endif // GUIUTIL_H

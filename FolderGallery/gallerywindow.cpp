@@ -25,6 +25,7 @@
 #include <QScrollBar>
 #include "iomanager.h"
 #include "directorycard.h"
+#include "guiutil.h"
 
 GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
 
@@ -42,20 +43,6 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
                 this, &GalleryWindow::cardRenderComplete);
     connect(this, &GalleryWindow::cardReady,
                 this, &GalleryWindow::cardInsert);
-
-    // TODO: Logic for loading enough items (wait all items loaded until add more)
-
-    // need:
-    // viewport width
-    // current widget size = 130
-    // amount to show view.width / widget.size
-
-
-    // use to calculate amount to show per row
-    // if 80% scrollbar, add 2/3 more rows. (add to total, keep track of current)
-    // Always keep track of total to show
-
-    // if sort, reset.
 
     centralFrame = new QFrame(this);
     centralLayout = new QVBoxLayout(centralFrame);
@@ -324,6 +311,8 @@ void GalleryWindow::cardResized(){
 void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
                                 int cardWidth, QString name, int sessionID){
 
+    GUIUtil util;
+
     // omit processing cards from different session
     if (sessionID != threadSession){
         qDebug() << "Skipping thread. Thread session: " + QString::number(sessionID) +
@@ -339,10 +328,12 @@ void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
 
     QListWidgetItem *item = new QListWidgetItem(galleryLWidget);
     item->setSizeHint(card->sizeHint());
+    util.applyWidgetFade(card, 300);
 
     qDebug() << "Displaying folder: " + name;
     galleryLWidget->setItemWidget(item, card);
-    qDebug() << "Number of folders: " + QString::number(galleryLWidget->count());
+    qDebug() << "Number of folders: " + QString::number(galleryLWidget->count()) +
+                " to current card: " + QString::number(currentCards);
 
     cardRenderStatus = true;
     cardRenderTimer->start(500);
