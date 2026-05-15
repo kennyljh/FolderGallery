@@ -140,6 +140,9 @@ void GalleryWindow::calculateMaxCardCount(const QSize &size, int slackRows){
     rowsToDisplay += slackRows;
     maxCards = cardsPerRow * rowsToDisplay;
 
+    // ensure that maxCards value not entirely inaccurate when resizing
+    if (maxCards < galleryLWidget->count()) maxCards = galleryLWidget->count();
+
     qDebug() << "Window width: " + QString::number(size.width()) + ", height: " +
                 QString::number(size.height()) + ", maxCards: " + QString::number(maxCards);
 }
@@ -192,11 +195,11 @@ void GalleryWindow::searchBtnClicked(){
 void GalleryWindow::processFoldersAsync(const QMap<QString,
                                     IOManager::folderBundle> &namesToFolderBundles){
 
-    cardReset();
-    this->namesToFolderBundles = namesToFolderBundles;
-
     generateSessionID();
     int currentSession = threadSession;
+
+    cardReset();
+    this->namesToFolderBundles = namesToFolderBundles;
 
     qDebug() << "Staring thread session: " + QString::number(threadSession);
 
@@ -352,7 +355,7 @@ void GalleryWindow::cardRenderComplete(){
     if ((galleryLWidget->verticalScrollBar()->value() / scrollBarMax) == 1){
 
         scrollBarValueChanged(galleryLWidget->verticalScrollBar()->value());
-        qDebug() << "Scrollbar maxed out after rendering";
+        qDebug() << "Scrollbar maxed out after rendering, adding more";
     }
 }
 
