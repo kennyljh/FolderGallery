@@ -114,7 +114,7 @@ void GalleryWindow::populateCBox(QComboBox &cbox,
 bool GalleryWindow::containsImage(QFileInfoList &fileList){
 
     for (const auto &file : fileList){
-        if (imageSuffixList.contains(file.suffix())) return true;
+        if (QImageReader::supportedImageFormats().contains(file.suffix())) return true;
     }
     return false;
 }
@@ -271,6 +271,7 @@ void GalleryWindow::addFoldersAsync(const QMap<QString,
 
         QList<QString> keys = namesToFolderBundles.keys();
 
+        // TODO - change to for loop, dont rely on updating currentCards, batch update at loop start
         // only process until new maxCards
         while (++currentCards <= maxCards){
 
@@ -390,7 +391,7 @@ void GalleryWindow::scrollBarValueChanged(const int &value){
 
         int scrollBarMax = galleryLWidget->verticalScrollBar()->maximum();
         if (scrollBarMax == 0) return;
-        if (value / scrollBarMax < 0.8) return;
+        if (value / scrollBarMax < 0.7) return;
 
         maxCards += 2 * cardsPerRow;
         qDebug() << "Scrollbar threshold reached. Adding " +
@@ -398,7 +399,8 @@ void GalleryWindow::scrollBarValueChanged(const int &value){
 
         int maxFolders = namesToFolderBundles.keys().size();
         if (maxCards > maxFolders) {
-
+            qDebug() << "maxCards exceeded maxFolders. Reset to maxFolders: " +
+                        QString::number(maxFolders);
             maxCards = maxFolders;
             return;
         }

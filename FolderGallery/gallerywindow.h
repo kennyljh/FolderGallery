@@ -31,15 +31,6 @@ class GalleryWindow : public QMainWindow{
         QStringList viewTypes = {"Small", "Medium", "Large", "V. Large"};
 
         /**
-         * @brief imageSuffixList - to check if a folder contains
-         * at least one supported image for card creation
-         */
-        QList<QString> imageSuffixList = {"bmp", "cur", "gif", "ico",
-                                            "jfif", "jpeg", "jpg", "pbm",
-                                            "pgm", "png", "ppm", "svg",
-                                            "svgz", "xbm", "xpm"};
-
-        /**
          * @brief iconSizeToVal - maps card sizes to their
          * widths
          */
