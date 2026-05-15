@@ -25,13 +25,24 @@ class GalleryWindow : public QMainWindow{
         explicit GalleryWindow(QWidget *parent = 0);
 
     private:
+        /**
+         * @brief viewTypes - available sizes of cards for combo box
+         */
         QStringList viewTypes = {"Small", "Medium", "Large", "V. Large"};
 
+        /**
+         * @brief imageSuffixList - to check if a folder contains
+         * at least one supported image for card creation
+         */
         QList<QString> imageSuffixList = {"bmp", "cur", "gif", "ico",
                                             "jfif", "jpeg", "jpg", "pbm",
                                             "pgm", "png", "ppm", "svg",
                                             "svgz", "xbm", "xpm"};
 
+        /**
+         * @brief iconSizeToVal - maps card sizes to their
+         * widths
+         */
         QMap<QString, int> iconSizeToVal = {
             {viewTypes[0], 90},
             {viewTypes[1], 135},
@@ -39,9 +50,28 @@ class GalleryWindow : public QMainWindow{
             {viewTypes[3], 340}
         };
 
+        /**
+         * @brief namesToFolderBundles - mapping of folder names
+         * to folder bundles, contains information on parent dir
+         * and child dirs
+         */
         QMap<QString, IOManager::folderBundle> namesToFolderBundles;
+
+        /**
+         * @brief currentCards - to keep track of current number
+         * of cards rendered
+         */
         int currentCards;
+
+        /**
+         * @brief maxCards - max cards that can be rendered
+         */
         int maxCards;
+
+        /**
+         * @brief cardsPerRow - number of cards per row, used
+         * in calculation for increasing maxCards
+         */
         int cardsPerRow;
 
         /**
@@ -50,9 +80,23 @@ class GalleryWindow : public QMainWindow{
          */
         int threadSession;
 
+        /**
+         * @brief cardRenderStatus - specifies if card rendering
+         * operation is still ongoing
+         */
         bool cardRenderStatus = false;
 
+        /**
+         * @brief resizeTimer - timer used to ensure that resize
+         * value collection only happens every 0.5s
+         */
         QTimer *resizeTimer;
+
+        /**
+         * @brief cardRenderTimer - times used to ensure that
+         * addition to maxCards can only happen when cards
+         * have stopped rendering
+         */
         QTimer *cardRenderTimer;
 
         QFrame *centralFrame;
@@ -80,6 +124,12 @@ class GalleryWindow : public QMainWindow{
          */
         void populateCBox(QComboBox &cbox, QStringList &list, QString &current);
 
+        /**
+         * @brief containsImage - checks if the current folder contains
+         * a supported image for card rendering
+         * @param fileList
+         * @return
+         */
         bool containsImage(QFileInfoList &fileList);
 
         /**
@@ -120,8 +170,17 @@ class GalleryWindow : public QMainWindow{
         void resizeEvent(QResizeEvent *event) override;
 
     private slots:
+        /**
+         * @brief updateStatusBar - updates status bar with
+         * desired message
+         * @param msg
+         */
         void updateStatusBar(const QString &msg);
 
+        /**
+         * @brief searchDirStarted - begin process of iterating
+         * folders and children for rendering
+         */
         void searchDirStarted();
 
         /**
@@ -143,23 +202,64 @@ class GalleryWindow : public QMainWindow{
         void addFoldersAsync(const QMap<QString,
                             IOManager::folderBundle> &namesToFolderBundles);
 
+        /**
+         * @brief viewTypeChanged - card sizes have changed in combo box
+         * and need to be updated
+         */
         void viewTypeChanged();
 
+        /**
+         * @brief windowResized - current window size changed and maxCards
+         * needs updating
+         */
         void windowResized();
 
+        /**
+         * @brief cardResized - cards sizes' have changed and maxCards
+         * needs updating
+         */
         void cardResized();
 
+        /**
+         * @brief cardInsert - start operation to insert card into widget
+         *
+         * If card session id is expired, then reject. Responsible for
+         * resetting cardRenderTimer everytime a card is rendered.
+         * @param bundle
+         * @param pix
+         * @param cardWidth
+         * @param name
+         * @param sessionID
+         */
         void cardInsert(IOManager::folderBundle bundle, QPixmap pix,
                         int cardWidth, QString name, int sessionID);
 
+        /**
+         * @brief cardRenderComplete - updates cardRenderStatus
+         * on render completion. If scroll bar is maxed out, add
+         * more cards.
+         */
         void cardRenderComplete();
 
+        /**
+         * @brief scrollBarValueChanged - called when scrollbar value
+         * changes. Only add more cards if several conditions satisfied.
+         * @param value
+         */
         void scrollBarValueChanged(const int &value);
 
     signals:
+        /**
+         * @brief cardReady - signals when a card is ready to be
+         * processed into widget.
+         * @param bundle
+         * @param pix
+         * @param cardWidth
+         * @param name
+         * @param sessionID
+         */
         void cardReady(IOManager::folderBundle bundle, QPixmap pix,
                         int cardWidth, QString name, int sessionID);
-
 };
 
 #endif // GALLERYWINDOW_H
