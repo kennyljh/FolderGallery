@@ -34,8 +34,8 @@ class IOManager : public QObject {
 
     signals:
         void dirProcessDone(const QMap<QString,
-                            folderBundle> &namesToFolderBundles,
-                            bool resetRender);
+                            IOManager::folderBundle> &namesToFolderBundles,
+                            int mode);
 
         void IOFailure(const QString &msg);
 

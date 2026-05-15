@@ -139,14 +139,16 @@ class GalleryWindow : public QMainWindow{
 
         /**
          * @brief processFoldersAsync - processes folders into cards and
-         * inserts into appropriate frames. resetRender boolean is used to
-         * determined if this is a new render or continued render
+         * inserts into appropriate frames.
+         *
+         * int mode is used to determine if the current render is a
+         * reset(0), resize(1), or continued(2)
          * @param namesToFolderBundles
          * @param reset
          */
         void processFoldersAsync(const QMap<QString,
                                  IOManager::folderBundle> &namesToFolderBundles,
-                                 bool resetRender);
+                                 int mode);
 
         /**
          * @brief viewTypeChanged - card sizes have changed in combo box

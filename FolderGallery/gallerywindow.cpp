@@ -143,10 +143,13 @@ void GalleryWindow::generateNormalSession(){
     if (metadata.maxCards > namesToFolderBundles.keys().size())
         metadata.maxCards = namesToFolderBundles.keys().size();
 
+    // in cases when we do a resize render
+    if (metadata.maxCards < metadata.currentCards) metadata.maxCards = metadata.currentCards;
+
     qDebug() << "Normal session generated: " + QString::number(metadata.threadSession) +
                 ", currentCards: " + QString::number(metadata.currentCards) +
                 ", cardsPerRow: " + QString::number(metadata.cardsPerRow) +
-                ", maxCards: " + QString::number(metadata.cardsPerRow);
+                ", maxCards: " + QString::number(metadata.maxCards);
 }
 
 void GalleryWindow::resizeEvent(QResizeEvent *event){
@@ -175,19 +178,30 @@ void GalleryWindow::searchDirStarted(){
 
 void GalleryWindow::processFoldersAsync(const QMap<QString,
                                         IOManager::folderBundle> &namesToFolderBundles,
-                                        bool resetRender){
+                                        int mode){
 
     if (namesToFolderBundles.isEmpty()){
         qDebug() << "No folders to render";
         return;
     }
 
-    if (resetRender) {
-        cardReset();
-        generateNormalSession();
-    }
-
     this->namesToFolderBundles = namesToFolderBundles;
+
+    switch (mode){
+
+        // reset render
+        case 0:
+            cardReset();
+            generateNormalSession();
+            break;
+        // resize render
+        case 1:
+            generateNormalSession();
+            break;
+        // continued render
+        case 2:
+            break;
+    }
 
     int currentSession = metadata.threadSession;
     int currentCards = metadata.currentCards;
@@ -243,7 +257,7 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
 
             QMetaObject::invokeMethod(this, [this, bundle, pix, index,
                                                 cardWidth, folderName, currentSession](){
-                emit cardReady(bundle, pix, index, cardWidth, folderName, currentSession);
+                emit cardReady(bundle, pix, index + 1, cardWidth, folderName, currentSession);
             }, Qt::QueuedConnection);
         }
     });
@@ -251,7 +265,7 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
 
 void GalleryWindow::viewTypeChanged(){
 
-    processFoldersAsync(namesToFolderBundles, true);
+    processFoldersAsync(namesToFolderBundles, 0);
 }
 
 void GalleryWindow::windowResized(){
@@ -260,7 +274,9 @@ void GalleryWindow::windowResized(){
         qDebug() << "Can't start window resize render when previous render is ongoing";
         return;
     }
-    processFoldersAsync(namesToFolderBundles, false);
+    qDebug() << "Window resized: " + QString::number(this->size().width()) +
+                " x " + QString::number(this->size().height());
+    processFoldersAsync(namesToFolderBundles, 1);
 }
 
 void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
@@ -327,7 +343,7 @@ void GalleryWindow::scrollBarValueChanged(const int &value){
         }
 
         qDebug() << "MaxCards update: " + QString::number(metadata.maxCards);
-        processFoldersAsync(namesToFolderBundles, false);
+        processFoldersAsync(namesToFolderBundles, 2);
     }
 }
 
