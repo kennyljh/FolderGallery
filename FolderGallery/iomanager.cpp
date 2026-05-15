@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QFileInfoList>
 #include <QMap>
+#include <QImageReader>
 
 IOManager::IOManager(QWidget *parent) : QObject(parent) {}
 
@@ -35,8 +36,22 @@ void IOManager::processDirAsync(const QString &absolutePath){
             QFileInfoList fileList = folderDir.entryInfoList(QDir::Files,
                                                              QDir::Name);
 
+            // trim empty folders
             if (fileList.isEmpty()) {
-                qDebug() << "Empty folder skipped: " + folder.baseName();
+                qDebug() << "Trimmed empty folder: " + folder.baseName();
+                continue;
+            }
+
+            // trim folders that do not contain supported image
+            bool containsImage = false;
+            for (const auto &file : fileList){
+                if (QImageReader::supportedImageFormats().contains(file.suffix())){
+                    containsImage = true;
+                    break;
+                }
+            }
+            if (!containsImage){
+                qDebug() << "Trimmed folder for not containing images: " + folder.baseName();
                 continue;
             }
 

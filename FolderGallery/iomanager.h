@@ -23,6 +23,12 @@ class IOManager : public QObject {
             QFileInfoList filesInfos;
         };
 
+        /**
+         * @brief processDirAsync - asynchronous call that processes all folders
+         * in the given directory. Trims away empty folders and folders that do not
+         * contain a supported image file from QImageReader::supportImageFormats()
+         * @param absolutePath
+         */
         void processDirAsync(const QString &absolutePath);
     private:
 
