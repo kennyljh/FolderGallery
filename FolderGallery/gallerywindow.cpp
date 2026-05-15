@@ -358,6 +358,7 @@ void GalleryWindow::scrollBarValueChanged(const int &value){
     if (!cardRenderStatus && currentCards > 0 && cardsPerRow > 0){
 
         int scrollBarMax = galleryLWidget->verticalScrollBar()->maximum();
+        if (scrollBarMax == 0) return;
         if (value / scrollBarMax < 0.9) return;
 
         maxCards += 2 * cardsPerRow;
