@@ -99,6 +99,8 @@ class GalleryWindow : public QMainWindow{
          */
         QTimer *cardRenderTimer;
 
+        int viewTypePrevChoice;
+
         QFrame *centralFrame;
         QVBoxLayout *centralLayout;
 

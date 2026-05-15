@@ -64,6 +64,7 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
 
             viewTypeCBox = new QComboBox(topFrame);
             populateCBox(*viewTypeCBox, viewTypes, viewTypes[1]);
+            viewTypePrevChoice = viewTypeCBox->currentIndex();
             connect(viewTypeCBox, &QComboBox::currentIndexChanged,
                         this, &GalleryWindow::viewTypeChanged);
 
@@ -170,6 +171,11 @@ void GalleryWindow::updateStatusBar(const QString &msg){
 
 void GalleryWindow::searchDirStarted(){
 
+    if (cardRenderStatus){
+        statusBar()->showMessage("Can't search while cards are still rendering", 1000);
+        return;
+    }
+
     IOManager *io = new IOManager(this);
 
     connect(io, &IOManager::IOFailure,
@@ -193,6 +199,22 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
 
     qDebug() << "Staring thread session processFoldersAsync: " + QString::number(threadSession);
 
+    /**
+     * Dev Note: It might be wise to run each individual instance of pixmap creation on
+     * a new thread, however, this presents an insertion order problem. Because
+     * each instance runs on some thread, we have no guarantee that they will finish in
+     * order, hence the ordering of cards will be inconsistent each time.
+     *
+     * Currently, we put the entire process of iteration into a single thread. This
+     * gives us a nice card pop in effect.
+     *
+     * The drawback to this design is that if we were to start a new process session
+     * while the current one is ongoing, we risk disrupting the value of currentCards
+     * and the number of cards rendered is incorrect.
+     *
+     * For now, this is fixed by not accepting QLineEdit or QComboBox requests if
+     * rendering is ongoing.
+     **/
     QThreadPool::globalInstance()->start([this, namesToFolderBundles, currentSession](){
 
         // todo - change to follow number of cards needed to insert
@@ -286,6 +308,15 @@ void GalleryWindow::addFoldersAsync(const QMap<QString,
 }
 
 void GalleryWindow::viewTypeChanged(){
+
+    if (cardRenderStatus){
+        statusBar()->showMessage("Can't change view while cards are still rendering", 1000);
+        qDebug() << "Atempting to change view type while cards are rendering";
+        viewTypeCBox->setCurrentIndex(viewTypePrevChoice);
+        return;
+    }
+
+    viewTypePrevChoice = viewTypeCBox->currentIndex();
 
     if (namesToFolderBundles.isEmpty()){
         qDebug() << "No folders found";
