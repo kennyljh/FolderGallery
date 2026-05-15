@@ -172,7 +172,7 @@ void GalleryWindow::updateStatusBar(const QString &msg){
 void GalleryWindow::searchDirStarted(){
 
     if (cardRenderStatus){
-        statusBar()->showMessage("Can't search while cards are still rendering", 1000);
+        statusBar()->showMessage("Can't search while cards are still rendering", 2000);
         return;
     }
 
@@ -310,7 +310,7 @@ void GalleryWindow::addFoldersAsync(const QMap<QString,
 void GalleryWindow::viewTypeChanged(){
 
     if (cardRenderStatus){
-        statusBar()->showMessage("Can't change view while cards are still rendering", 1000);
+        statusBar()->showMessage("Can't change view while cards are still rendering", 2000);
         qDebug() << "Atempting to change view type while cards are rendering";
         viewTypeCBox->setCurrentIndex(viewTypePrevChoice);
         return;
