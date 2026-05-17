@@ -21,7 +21,11 @@ class FolderWindow : public GalleryWindow {
 
         QLabel *dirLabel;
 
+        void processBundleAsync(const IOManager::folderBundle &bundle);
+
         QMap<QString, QFileInfo> getBundleToProcess();
+
+        void processBundleFinished();
 
     private slots:
         void processFilesAsync(int rMode);
@@ -33,6 +37,8 @@ class FolderWindow : public GalleryWindow {
                         int sessionID);
 
     signals:
+        void bundleProcessed();
+
         void cardReady(QFileInfo fileInfo, QPixmap pix,
                         int cardNum, int cardWidth, QString cardName,
                         int sessionID);

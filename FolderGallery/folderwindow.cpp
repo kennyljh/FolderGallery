@@ -89,6 +89,28 @@ FolderWindow::FolderWindow(IOManager::folderBundle bundle,
     centralLayout->setAlignment(Qt::AlignTop);
 
     setCentralWidget(centralFrame);
+
+    processBundleAsync(bundle);
+}
+
+void FolderWindow::processBundleAsync(const IOManager::folderBundle &bundle){
+
+    if (bundle.filesInfos.isEmpty()){
+        qDebug() << "No files to process";
+        return;
+    }
+
+    QThreadPool::globalInstance()->start([this, bundle](){
+
+        for (auto const &file : bundle.filesInfos){
+
+            namesToFileInfos.insert(file.baseName(), file);
+            qDebug() << "Found file: " + file.baseName();
+        }
+        QMetaObject::invokeMethod(this, [this](){
+            emit bundleProcessed();
+        });
+    });
 }
 
 QMap<QString, QFileInfo> FolderWindow::getBundleToProcess(){
@@ -102,6 +124,11 @@ QMap<QString, QFileInfo> FolderWindow::getBundleToProcess(){
        return datesToFileInfos;
     }
     return namesToFileInfos;
+}
+
+void FolderWindow::processBundleFinished(){
+
+    sortTypeChanged(sortCBox->currentIndex());
 }
 
 void FolderWindow::processFilesAsync(int rMode){

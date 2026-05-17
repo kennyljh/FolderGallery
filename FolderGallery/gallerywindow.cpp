@@ -198,7 +198,7 @@ void GalleryWindow::searchDirStarted(){
     sortTypeChanged(sortCBox->currentIndex());
 }
 
-void GalleryWindow::processFoldersAsync(int rMode){
+void GalleryWindow::processFoldersAsync(const int &rMode){
 
     switch (rMode){
         // reset render

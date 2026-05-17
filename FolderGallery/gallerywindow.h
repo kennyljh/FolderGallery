@@ -193,7 +193,7 @@ class GalleryWindow : public QMainWindow{
          * widgets. Rendering differs depending on renderMode and sortMode
          * @param rMode
          */
-        void processFoldersAsync(int rMode);
+        void processFoldersAsync(const int &rMode);
 
         /**
          * @brief sortTypeChanged - called when the selected sort
@@ -267,7 +267,7 @@ class GalleryWindow : public QMainWindow{
          * for rendering
          * @param rMode
          */
-        void sortReady(int rMode);
+        void sortReady(const int &rMode);
 };
 
 #endif // GALLERYWINDOW_H
