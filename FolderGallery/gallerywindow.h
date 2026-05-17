@@ -31,6 +31,14 @@ class GalleryWindow : public QMainWindow{
         QStringList viewTypes = {"Small", "Medium", "Large", "V. Large"};
 
         /**
+         * @brief sortTypes - available card sort types
+         */
+        QStringList sortTypes = {"Name (Ascend)",
+                                 "Name (Descend)",
+                                 "Date (Ascend)",
+                                 "Date (Descend)"};
+
+        /**
          * @brief iconSizeToVal - maps card sizes to their
          * widths
          */
@@ -47,6 +55,13 @@ class GalleryWindow : public QMainWindow{
          * and child dirs
          */
         QMap<QString, IOManager::folderBundle> namesToFolderBundles;
+
+        /**
+         * @brief namesToFolderBundles - mapping of folder birthdates
+         * to folder bundles, bundles contain information on parent dir
+         * and child dirs
+         */
+        QMap<QString, IOManager::folderBundle> datesToFolderBundles;
 
         struct sessionMetadata{
 
@@ -75,6 +90,27 @@ class GalleryWindow : public QMainWindow{
          * have stopped rendering
          */
         QTimer *cardRenderTimer;
+
+        /**
+         * @brief The renderMode enum - types of rendering modes
+         * for folders
+         */
+        enum renderMode{
+            resetRender,
+            resizeRender,
+            continueRender
+        };
+
+        /**
+         * @brief The sortMode enum - types of sorting modes
+         * to render folders
+         */
+        enum sortMode{
+            sortByNameAscend,
+            sortByNameDescend,
+            sortByDateAscend,
+            sortByDateDescend
+        };
 
         QFrame *centralFrame;
         QVBoxLayout *centralLayout;
@@ -112,6 +148,13 @@ class GalleryWindow : public QMainWindow{
          */
         void generateNormalSession();
 
+        /**
+         * @brief getBundleToProcess - used to identify which folder
+         * bundle to process, e.g. names or dates bundles
+         * @return
+         */
+        QMap<QString, IOManager::folderBundle> getBundleToProcess();
+
     protected:
         /**
          * @brief resizeEvent - will trigger at every instance
@@ -136,6 +179,14 @@ class GalleryWindow : public QMainWindow{
         void searchDirStarted();
 
         /**
+         * @brief processDirFinished - responsible for setting namesToFolderBundles
+         * and calls card rendering based on sort type preference
+         * @param namesToFolderBundles
+         */
+        void processDirFinished(const QMap<QString,
+                                    IOManager::folderBundle> &namesToFolderBundles);
+
+        /**
          * @brief processFoldersAsync - asynchronous, processes folders into cards
          * and inserts into appropriate frames.
          *
@@ -144,9 +195,7 @@ class GalleryWindow : public QMainWindow{
          * @param namesToFolderBundles
          * @param reset
          */
-        void processFoldersAsync(const QMap<QString,
-                                 IOManager::folderBundle> &namesToFolderBundles,
-                                 int mode);
+        void processFoldersAsync(renderMode rMode);
 
         /**
          * @brief viewTypeChanged - card sizes have changed in combo box
@@ -192,6 +241,13 @@ class GalleryWindow : public QMainWindow{
          */
         void scrollBarValueChanged(const int &value);
 
+        /**
+         * @brief sortTypeChanged - called when the selected sort
+         * type is changed
+         * @param index
+         */
+        void sortTypeChanged(const int &index);
+
     signals:
         /**
          * @brief cardReady - signals when a directory card is ready
@@ -206,6 +262,13 @@ class GalleryWindow : public QMainWindow{
         void cardReady(IOManager::folderBundle bundle, QPixmap pix,
                         int cardNum, int cardWidth, QString cardName,
                         int sessionID);
+
+        /**
+         * @brief sortReady - signals when folders are sorted and ready
+         * for rendering
+         * @param rMode
+         */
+        void sortReady(renderMode rMode);
 };
 
 #endif // GALLERYWINDOW_H

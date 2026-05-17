@@ -67,7 +67,7 @@ void IOManager::processDirAsync(const QString &absolutePath){
 
         QMetaObject::invokeMethod(this, [this, namesToFolderBundles](){
 
-            dirProcessDone(namesToFolderBundles, 0);
+            dirProcessDone(namesToFolderBundles);
             emit IOSuccess("Found " + QString::number(namesToFolderBundles.keys().size()) + " folders.");
         }, Qt::QueuedConnection);
     });

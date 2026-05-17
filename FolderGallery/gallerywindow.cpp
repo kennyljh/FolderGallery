@@ -43,6 +43,8 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
                 this, &GalleryWindow::cardRenderComplete);
     connect(this, &GalleryWindow::cardReady,
                 this, &GalleryWindow::cardInsert);
+    connect(this, &GalleryWindow::sortReady,
+                this, &GalleryWindow::processFoldersAsync);
 
     centralFrame = new QFrame(this);
     centralLayout = new QVBoxLayout(centralFrame);
@@ -68,11 +70,9 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
                         this, &GalleryWindow::viewTypeChanged);
 
             sortCBox = new QComboBox(topFrame);
-            QStringList sortTypes = {"Name (Ascend)",
-                                     "Name (Descend)",
-                                     "Date (Ascend)",
-                                     "Date (Descend)"};
             populateCBox(*sortCBox, sortTypes, sortTypes[0]);
+            connect(sortCBox, &QComboBox::currentIndexChanged,
+                        this, &GalleryWindow::sortTypeChanged);
 
             settingsBtn = new QPushButton(topFrame);
             settingsBtn->setIcon(QIcon(":/icons/settings-light.svg"));
@@ -139,8 +139,8 @@ void GalleryWindow::generateNormalSession(){
     rowsToDisplay += 2;
     metadata.maxCards = metadata.cardsPerRow * rowsToDisplay;
 
-    if (metadata.maxCards > namesToFolderBundles.keys().size())
-        metadata.maxCards = namesToFolderBundles.keys().size();
+    if (metadata.maxCards > getBundleToProcess().keys().size())
+        metadata.maxCards = getBundleToProcess().keys().size();
 
     // in cases when we do a resize render
     if (metadata.maxCards < metadata.currentCards) metadata.maxCards = metadata.currentCards;
@@ -149,6 +149,19 @@ void GalleryWindow::generateNormalSession(){
                 ", currentCards: " + QString::number(metadata.currentCards) +
                 ", cardsPerRow: " + QString::number(metadata.cardsPerRow) +
                 ", maxCards: " + QString::number(metadata.maxCards);
+}
+
+QMap<QString, IOManager::folderBundle> GalleryWindow::getBundleToProcess(){
+
+    sortMode sMode = static_cast<sortMode>(sortCBox->currentIndex());
+
+    if (sMode == sortByNameAscend || sMode == sortByNameDescend){
+        return namesToFolderBundles;
+    }
+    else if (sMode == sortByDateAscend || sMode == sortByDateDescend){
+       return datesToFolderBundles;
+    }
+    return namesToFolderBundles;
 }
 
 void GalleryWindow::resizeEvent(QResizeEvent *event){
@@ -170,39 +183,83 @@ void GalleryWindow::searchDirStarted(){
     connect(io, &IOManager::IOSuccess,
             this, &GalleryWindow::updateStatusBar);
     connect(io, &IOManager::dirProcessDone,
-            this, &GalleryWindow::processFoldersAsync);
+            this, &GalleryWindow::processDirFinished);
 
     io->processDirAsync(currentDirLnEdt->text());
 }
 
-void GalleryWindow::processFoldersAsync(const QMap<QString,
-                                        IOManager::folderBundle> &namesToFolderBundles,
-                                        int mode){
-
-    if (namesToFolderBundles.isEmpty()){
-        qDebug() << "No folders to render";
-        return;
-    }
+ void GalleryWindow::processDirFinished(const QMap<QString,
+                                            IOManager::folderBundle> &namesToFolderBundles){
 
     this->namesToFolderBundles = namesToFolderBundles;
 
-    switch (mode){
+    if (sortCBox->currentIndex() != 0){
+        sortCBox->setCurrentIndex(0);
+    }
+    else {
+        processFoldersAsync(resetRender);
+    }
+}
 
+void GalleryWindow::processFoldersAsync(renderMode rMode){
+
+    switch (rMode){
         // reset render
-        case 0:
+        case resetRender:
             cardReset();
             generateNormalSession();
             break;
         // resize render
-        case 1:
+        case resizeRender:
             generateNormalSession();
             break;
         // continued render
-        case 2:
+        case continueRender:
             qDebug() << "Continued session: " + QString::number(metadata.threadSession) +
                 ", currentCards: " + QString::number(metadata.currentCards) +
                 ", cardsPerRow: " + QString::number(metadata.cardsPerRow) +
                 ", maxCards: " + QString::number(metadata.maxCards);
+            break;
+    }
+
+    QMap<QString, IOManager::folderBundle> bundlesToProcess;
+
+    switch (static_cast<sortMode>(sortCBox->currentIndex())){
+        case sortByNameAscend:
+            if (namesToFolderBundles.isEmpty()){
+                qDebug() << "No folder to process.";
+                return;
+            }
+            else {
+                bundlesToProcess = namesToFolderBundles;
+            }
+            break;
+        case sortByNameDescend:
+            if (namesToFolderBundles.isEmpty()){
+                qDebug() << "No folder to process.";
+                return;
+            }
+            else {
+                bundlesToProcess = namesToFolderBundles;
+            }
+            break;
+        case sortByDateAscend:
+            if (datesToFolderBundles.isEmpty()){
+                qDebug() << "No folder to process.";
+                return;
+            }
+            else {
+                bundlesToProcess = datesToFolderBundles;
+            }
+            break;
+        case sortByDateDescend:
+            if (datesToFolderBundles.isEmpty()){
+                qDebug() << "No folder to process.";
+                return;
+            }
+            else {
+                bundlesToProcess = datesToFolderBundles;
+            }
             break;
     }
 
@@ -225,14 +282,24 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
      * proceed until current render is complete, otherwise card insertion order will
      * not be sequential.
      **/
-    QThreadPool::globalInstance()->start([this, namesToFolderBundles, currentSession,
+    QThreadPool::globalInstance()->start([this, bundlesToProcess, currentSession,
                                             currentCards, maxCards](){
 
-        QList<QString> keys = namesToFolderBundles.keys();
+        QList<QString> keys = bundlesToProcess.keys();
         for (int index = currentCards; index < maxCards; index++){
 
-            QString folderName = keys[index];
-            IOManager::folderBundle bundle = namesToFolderBundles[folderName];
+            QString metadata;
+
+            sortMode sMode = static_cast<sortMode>(sortCBox->currentIndex());
+            if (sMode == sortByDateDescend || sMode == sortByNameDescend){
+                metadata = keys[keys.count() - 1 - index];
+            }
+            else {
+                metadata = keys[index];
+            }
+
+            IOManager::folderBundle bundle = bundlesToProcess[metadata];
+            QString folderName = bundle.folderInfo.baseName();
 
             int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
 
@@ -263,7 +330,7 @@ void GalleryWindow::processFoldersAsync(const QMap<QString,
 
 void GalleryWindow::viewTypeChanged(){
 
-    processFoldersAsync(namesToFolderBundles, 0);
+    processFoldersAsync(resetRender);
 }
 
 void GalleryWindow::windowResized(){
@@ -274,7 +341,7 @@ void GalleryWindow::windowResized(){
     }
     qDebug() << "Window resized: " + QString::number(this->size().width()) +
                 " x " + QString::number(this->size().height());
-    processFoldersAsync(namesToFolderBundles, 1);
+    processFoldersAsync(resizeRender);
 }
 
 void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
@@ -335,16 +402,43 @@ void GalleryWindow::scrollBarValueChanged(const int &value){
         qDebug() << "Scrollbar threshold reached. Adding " +
                     QString::number(2 * metadata.cardsPerRow) + " more cards;";
 
-        if (metadata.maxCards > namesToFolderBundles.keys().size()) {
+        if (metadata.maxCards > getBundleToProcess().keys().size()) {
             qDebug() << "maxCards exceed maxFolders. Revert increment";
-            metadata.maxCards = namesToFolderBundles.keys().size();
+            metadata.maxCards = getBundleToProcess().keys().size();
         }
 
         qDebug() << "MaxCards update: " + QString::number(metadata.maxCards);
-        processFoldersAsync(namesToFolderBundles, 2);
+        processFoldersAsync(continueRender);
     }
 }
 
+void GalleryWindow::sortTypeChanged(const int &index){
+
+    sortMode mode = static_cast<sortMode>(index);
+    if (mode == sortByDateAscend || mode == sortByDateDescend){
+
+        if (datesToFolderBundles.isEmpty()){
+
+            QThreadPool::globalInstance()->start([this](){
+
+                for (auto const &bundle : namesToFolderBundles){
+                    QString dateTime = bundle.folderInfo.birthTime().toString("yyyy/MM/dd") + "-" +
+                                        bundle.folderInfo.birthTime().time().toString(Qt::ISODateWithMs);
+                    datesToFolderBundles.insert(dateTime, bundle);
+                }
+                QMetaObject::invokeMethod(this, [this](){
+                    emit sortReady(resetRender);
+                }, Qt::QueuedConnection);
+            });
+        }
+        else {
+            emit sortReady(resetRender);
+        }
+    }
+    else if (mode == sortByNameAscend || mode == sortByNameDescend){
+        emit sortReady(resetRender);
+    }
+}
 
 
 

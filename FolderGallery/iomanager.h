@@ -40,8 +40,7 @@ class IOManager : public QObject {
          * @param mode
          */
         void dirProcessDone(const QMap<QString,
-                            IOManager::folderBundle> &namesToFolderBundles,
-                            int mode);
+                            IOManager::folderBundle> &namesToFolderBundles);
 
         void IOFailure(const QString &msg);
 
