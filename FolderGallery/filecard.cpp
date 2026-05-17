@@ -1,4 +1,4 @@
-#include "directorycard.h"
+#include "filecard.h"
 
 #include <QWidget>
 #include <QFrame>
@@ -8,12 +8,11 @@
 #include <QPixmap>
 #include <QFontMetrics>
 
-DirectoryCard::DirectoryCard(QFileInfo &folderInfo, QFileInfoList &filesInfos,
-                                int &width, QPixmap &pix, QWidget *parent)
-              : QFrame(parent){
+FileCard::FileCard(QFileInfo &fileInfo, int &width,
+                            QPixmap &pix, QWidget *parent)
+          : QFrame(parent) {
 
-    this->folderInfo = folderInfo;
-    this->filesInfos = filesInfos;
+    this->fileInfo = fileInfo;
 
     mainLayout = new QVBoxLayout(this);
     mainLayout->setAlignment(Qt::AlignHCenter);
@@ -24,7 +23,7 @@ DirectoryCard::DirectoryCard(QFileInfo &folderInfo, QFileInfoList &filesInfos,
         nameLabel = new QLabel(this);
         QFontMetrics metrics(imageLabel->font());
         nameLabel->setText(
-            metrics.elidedText(folderInfo.baseName(),
+            metrics.elidedText(fileInfo.baseName(),
                                 Qt::ElideMiddle,
                                 width)
         );

@@ -26,6 +26,41 @@ class GalleryWindow : public QMainWindow{
 
     private:
         /**
+         * @brief namesToFolderBundles - mapping of folder names
+         * to folder bundles, bundles contain information on parent dir
+         * and child dirs
+         */
+        QMap<QString, IOManager::folderBundle> namesToFolderBundles;
+
+        /**
+         * @brief namesToFolderBundles - mapping of folder birthdates
+         * to folder bundles, bundles contain information on parent dir
+         * and child dirs
+         */
+        QMap<QString, IOManager::folderBundle> datesToFolderBundles;
+
+        QPushButton *folderPictureBtn;
+        QLineEdit *currentDirLnEdt;
+        QPushButton *searchBtn;
+        QPushButton *settingsBtn;
+
+        /**
+         * @brief getBundleToProcess - used to identify which folder
+         * bundle to process, e.g. names or dates bundles
+         * @return
+         */
+        QMap<QString, IOManager::folderBundle> getBundleToProcess();
+
+    protected:
+        /**
+         * @brief resizeEvent - will trigger at every instance
+         * of resize, a QTimer is connected to ensure that
+         * size is only processed every 500ms
+         * @param event
+         */
+        void resizeEvent(QResizeEvent *event) override;
+
+        /**
          * @brief viewTypes - available sizes of cards for combo box
          */
         QStringList viewTypes = {"Small", "Medium", "Large", "V. Large"};
@@ -48,20 +83,6 @@ class GalleryWindow : public QMainWindow{
             {viewTypes[2], 210},
             {viewTypes[3], 340}
         };
-
-        /**
-         * @brief namesToFolderBundles - mapping of folder names
-         * to folder bundles, bundles contain information on parent dir
-         * and child dirs
-         */
-        QMap<QString, IOManager::folderBundle> namesToFolderBundles;
-
-        /**
-         * @brief namesToFolderBundles - mapping of folder birthdates
-         * to folder bundles, bundles contain information on parent dir
-         * and child dirs
-         */
-        QMap<QString, IOManager::folderBundle> datesToFolderBundles;
 
         struct sessionMetadata{
 
@@ -112,22 +133,6 @@ class GalleryWindow : public QMainWindow{
             sortByDateDescend
         };
 
-        QFrame *centralFrame;
-        QVBoxLayout *centralLayout;
-
-        QFrame *topFrame;
-        QHBoxLayout *topLayout;
-        QPushButton *folderPictureBtn;
-        QLineEdit *currentDirLnEdt;
-        QPushButton *searchBtn;
-        QComboBox *viewTypeCBox;
-        QComboBox *sortCBox;
-        QPushButton *settingsBtn;
-
-        QFrame *galleryFrame;
-        QVBoxLayout *galleryLayout;
-        QListWidget *galleryLWidget;
-
         /**
          * @brief populateCBox - populates given combo box with
          * list of strings and sets current selected option
@@ -148,21 +153,18 @@ class GalleryWindow : public QMainWindow{
          */
         void generateNormalSession();
 
-        /**
-         * @brief getBundleToProcess - used to identify which folder
-         * bundle to process, e.g. names or dates bundles
-         * @return
-         */
-        QMap<QString, IOManager::folderBundle> getBundleToProcess();
+        QFrame *centralFrame;
+        QVBoxLayout *centralLayout;
 
-    protected:
-        /**
-         * @brief resizeEvent - will trigger at every instance
-         * of resize, a QTimer is connected to ensure that
-         * size is only processed every 500ms
-         * @param event
-         */
-        void resizeEvent(QResizeEvent *event) override;
+        QFrame *topFrame;
+        QHBoxLayout *topLayout;
+
+        QComboBox *viewTypeCBox;
+        QComboBox *sortCBox;
+
+        QFrame *galleryFrame;
+        QVBoxLayout *galleryLayout;
+        QListWidget *galleryLWidget;
 
     private slots:
         /**
@@ -194,17 +196,11 @@ class GalleryWindow : public QMainWindow{
         void processFoldersAsync(int rMode);
 
         /**
-         * @brief viewTypeChanged - card sizes have changed in combo box
-         * and need to be updated
+         * @brief sortTypeChanged - called when the selected sort
+         * type is changed
+         * @param index
          */
-        void viewTypeChanged();
-
-        /**
-         * @brief windowResized - current window resized, number of cards
-         * rendered needs updating. Cannot proceed if previous render still
-         * ongoing
-         */
-        void windowResized();
+        void sortTypeChanged(const int &mode);
 
         /**
          * @brief cardInsert - begins inserting card into appropriate
@@ -223,6 +219,20 @@ class GalleryWindow : public QMainWindow{
                         int cardNum, int cardWidth, QString cardName,
                         int sessionID);
 
+    protected slots:
+        /**
+         * @brief viewTypeChanged - card sizes have changed in combo box
+         * and need to be updated
+         */
+        void viewTypeChanged();
+
+        /**
+         * @brief windowResized - current window resized, number of cards
+         * rendered needs updating. Cannot proceed if previous render still
+         * ongoing
+         */
+        void windowResized();
+
         /**
          * @brief cardRenderComplete - updates cardRenderStatus
          * on render completion. If scroll bar is maxed out, add
@@ -236,13 +246,6 @@ class GalleryWindow : public QMainWindow{
          * @param value
          */
         void scrollBarValueChanged(const int &value);
-
-        /**
-         * @brief sortTypeChanged - called when the selected sort
-         * type is changed
-         * @param index
-         */
-        void sortTypeChanged(const int &mode);
 
     signals:
         /**

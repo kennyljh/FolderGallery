@@ -21,8 +21,6 @@ class DirectoryCard : public QFrame{
         QVBoxLayout *mainLayout;
         QLabel *imageLabel;
         QLabel *nameLabel;
-
-    //todo - add a truncate func based on viewtype
 };
 
 #endif // DIRECTORYCARD_H
