@@ -9,7 +9,7 @@
 #include "gallerywindow.h"
 #include "iomanager.h"
 
-class FolderWindow : protected GalleryWindow {
+class FolderWindow : public GalleryWindow {
     Q_OBJECT
     public:
         explicit FolderWindow(IOManager::folderBundle bundle,

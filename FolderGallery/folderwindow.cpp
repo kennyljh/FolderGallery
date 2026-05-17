@@ -201,9 +201,9 @@ void FolderWindow::processFilesAsync(int rMode){
 
             pix = QPixmap::fromImage(image);
 
-            QMetaObject::invokeMethod(this, [this, bundle, pix, index,
-                                                cardWidth, folderName, currentSession](){
-                emit cardReady(bundle, pix, index + 1, cardWidth, folderName, currentSession);
+            QMetaObject::invokeMethod(this, [this, fileInfo, pix, index,
+                                                cardWidth, fileName, currentSession](){
+                emit cardReady(fileInfo, pix, index + 1, cardWidth, fileName, currentSession);
             }, Qt::QueuedConnection);
         }
     });
@@ -211,7 +211,29 @@ void FolderWindow::processFilesAsync(int rMode){
 
 void FolderWindow::sortTypeChanged(const int &mode){
 
+    if (mode == sortByDateAscend || mode == sortByDateDescend){
 
+        if (datesToFileInfos.isEmpty()){
+
+            QThreadPool::globalInstance()->start([this](){
+
+                for (auto const &file : namesToFileInfos){
+                    QString dateTime = file.birthTime().date().toString("yyyy/MM/dd") + "-" +
+                                        file.birthTime().time().toString(Qt::ISODateWithMs);
+                    datesToFileInfos.insert(dateTime, file);
+                }
+                QMetaObject::invokeMethod(this, [this](){
+                    emit sortReady(resetRender);
+                }, Qt::QueuedConnection);
+            });
+        }
+        else {
+            emit sortReady(resetRender);
+        }
+    }
+    else if (mode == sortByNameAscend || mode == sortByNameDescend){
+        emit sortReady(resetRender);
+    }
 }
 
 void FolderWindow::cardInsert(QFileInfo fileInfo, QPixmap pix,
