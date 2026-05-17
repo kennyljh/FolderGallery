@@ -1,3 +1,12 @@
 #include "folderwindow.h"
 
-FolderWindow::FolderWindow() {}
+#include <QWidget>
+#include <QMainWindow>
+
+FolderWindow::FolderWindow(IOManager::folderBundle bundle,
+                            QWidget *parent)
+             : GalleryWindow(parent) {
+
+}
+
+

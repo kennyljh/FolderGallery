@@ -54,6 +54,8 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
         topLayout = new QHBoxLayout(topFrame);
             folderPictureBtn = new QPushButton(topFrame);
             folderPictureBtn->setIcon(QIcon(":/icons/folder-light.svg"));
+            folderPictureBtn->setFixedHeight(28);
+
             currentDirLnEdt = new QLineEdit(topFrame);
             currentDirLnEdt->setPlaceholderText("Enter folder directory...");
             connect(currentDirLnEdt, &QLineEdit::returnPressed,
@@ -63,6 +65,7 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
             searchBtn->setIcon(QIcon(":/icons/search-light.svg"));
             connect(searchBtn, &QPushButton::clicked,
                     this, &GalleryWindow::searchDirStarted);
+            searchBtn->setFixedHeight(28);
 
             viewTypeCBox = new QComboBox(topFrame);
             populateCBox(*viewTypeCBox, viewTypes, viewTypes[1]);
@@ -76,6 +79,7 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
 
             settingsBtn = new QPushButton(topFrame);
             settingsBtn->setIcon(QIcon(":/icons/settings-light.svg"));
+            settingsBtn->setFixedHeight(28);
         topLayout->addWidget(folderPictureBtn);
         topLayout->addWidget(currentDirLnEdt, 1);
         topLayout->addWidget(searchBtn);
@@ -135,7 +139,6 @@ void GalleryWindow::generateNormalSession(){
     // account for Qlabel of directory cards
     int rowsToDisplay = size.height() / ((cardWidth + 30) * 1.414);
     // to give the illusion that more images are loaded but not all for startup
-
     rowsToDisplay += 2;
     metadata.maxCards = metadata.cardsPerRow * rowsToDisplay;
 
@@ -153,7 +156,7 @@ void GalleryWindow::generateNormalSession(){
 
 QMap<QString, IOManager::folderBundle> GalleryWindow::getBundleToProcess(){
 
-    sortMode sMode = static_cast<sortMode>(sortCBox->currentIndex());
+    int sMode = sortCBox->currentIndex();
 
     if (sMode == sortByNameAscend || sMode == sortByNameDescend){
         return namesToFolderBundles;
@@ -192,16 +195,10 @@ void GalleryWindow::searchDirStarted(){
                                             IOManager::folderBundle> &namesToFolderBundles){
 
     this->namesToFolderBundles = namesToFolderBundles;
-
-    if (sortCBox->currentIndex() != 0){
-        sortCBox->setCurrentIndex(0);
-    }
-    else {
-        processFoldersAsync(resetRender);
-    }
+    sortTypeChanged(sortCBox->currentIndex());
 }
 
-void GalleryWindow::processFoldersAsync(renderMode rMode){
+void GalleryWindow::processFoldersAsync(int rMode){
 
     switch (rMode){
         // reset render
@@ -223,44 +220,27 @@ void GalleryWindow::processFoldersAsync(renderMode rMode){
     }
 
     QMap<QString, IOManager::folderBundle> bundlesToProcess;
+    int sMode = sortCBox->currentIndex();
 
-    switch (static_cast<sortMode>(sortCBox->currentIndex())){
-        case sortByNameAscend:
-            if (namesToFolderBundles.isEmpty()){
-                qDebug() << "No folder to process.";
-                return;
-            }
-            else {
-                bundlesToProcess = namesToFolderBundles;
-            }
-            break;
-        case sortByNameDescend:
-            if (namesToFolderBundles.isEmpty()){
-                qDebug() << "No folder to process.";
-                return;
-            }
-            else {
-                bundlesToProcess = namesToFolderBundles;
-            }
-            break;
-        case sortByDateAscend:
-            if (datesToFolderBundles.isEmpty()){
-                qDebug() << "No folder to process.";
-                return;
-            }
-            else {
-                bundlesToProcess = datesToFolderBundles;
-            }
-            break;
-        case sortByDateDescend:
-            if (datesToFolderBundles.isEmpty()){
-                qDebug() << "No folder to process.";
-                return;
-            }
-            else {
-                bundlesToProcess = datesToFolderBundles;
-            }
-            break;
+    if (sMode == sortByNameAscend || sMode == sortByNameDescend){
+
+        if (namesToFolderBundles.isEmpty()){
+            qDebug() << "No folder to process.";
+            return;
+        }
+        else {
+            bundlesToProcess = namesToFolderBundles;
+        }
+    }
+    else if (sMode == sortByDateAscend || sMode == sortByDateDescend){
+
+        if (datesToFolderBundles.isEmpty()){
+            qDebug() << "No folder to process.";
+            return;
+        }
+        else {
+            bundlesToProcess = datesToFolderBundles;
+        }
     }
 
     int currentSession = metadata.threadSession;
@@ -290,7 +270,7 @@ void GalleryWindow::processFoldersAsync(renderMode rMode){
 
             QString metadata;
 
-            sortMode sMode = static_cast<sortMode>(sortCBox->currentIndex());
+            int sMode = sortCBox->currentIndex();
             if (sMode == sortByDateDescend || sMode == sortByNameDescend){
                 metadata = keys[keys.count() - 1 - index];
             }
@@ -412,9 +392,8 @@ void GalleryWindow::scrollBarValueChanged(const int &value){
     }
 }
 
-void GalleryWindow::sortTypeChanged(const int &index){
+void GalleryWindow::sortTypeChanged(const int &mode){
 
-    sortMode mode = static_cast<sortMode>(index);
     if (mode == sortByDateAscend || mode == sortByDateDescend){
 
         if (datesToFolderBundles.isEmpty()){

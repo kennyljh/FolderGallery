@@ -187,15 +187,11 @@ class GalleryWindow : public QMainWindow{
                                     IOManager::folderBundle> &namesToFolderBundles);
 
         /**
-         * @brief processFoldersAsync - asynchronous, processes folders into cards
-         * and inserts into appropriate frames.
-         *
-         * mode is used to determine if the current render is a
-         * reset(0), resize(1), or continued(2)
-         * @param namesToFolderBundles
-         * @param reset
+         * @brief processFoldersAsync - asynchronous, processes folder into appropriate
+         * widgets. Rendering differs depending on renderMode and sortMode
+         * @param rMode
          */
-        void processFoldersAsync(renderMode rMode);
+        void processFoldersAsync(int rMode);
 
         /**
          * @brief viewTypeChanged - card sizes have changed in combo box
@@ -246,7 +242,7 @@ class GalleryWindow : public QMainWindow{
          * type is changed
          * @param index
          */
-        void sortTypeChanged(const int &index);
+        void sortTypeChanged(const int &mode);
 
     signals:
         /**
@@ -268,7 +264,7 @@ class GalleryWindow : public QMainWindow{
          * for rendering
          * @param rMode
          */
-        void sortReady(renderMode rMode);
+        void sortReady(int rMode);
 };
 
 #endif // GALLERYWINDOW_H
