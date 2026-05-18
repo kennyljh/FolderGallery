@@ -24,7 +24,7 @@ class GalleryWindow : public QMainWindow{
     public:
         explicit GalleryWindow(QWidget *parent = 0);
 
-    protected:
+    private:
         /**
          * @brief viewTypes - available sizes of cards for combo box
          */
@@ -79,7 +79,6 @@ class GalleryWindow : public QMainWindow{
             sortByDateDescend
         };
 
-    private:
         /**
          * @brief namesToFolderBundles - mapping of folder names
          * to folder bundles, bundles contain information on parent dir

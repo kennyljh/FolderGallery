@@ -1,20 +1,85 @@
 #ifndef FOLDERWINDOW_H
 #define FOLDERWINDOW_H
 
+#include <QMainWindow>
 #include <QWidget>
-#include <QLabel>
-#include <QFileInfo>
-#include <QPixmap>
+#include <QPushButton>
+#include <QLineEdit>
+#include <QListWidget>
+#include <QListWidgetItem>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <QFrame>
+#include <QComboBox>
+#include <QStringList>
 #include <QString>
-#include "gallerywindow.h"
+#include <QFileInfoList>
+#include <QList>
+#include <QResizeEvent>
+#include <QTimer>
+#include <QLabel>
 #include "iomanager.h"
 
-class FolderWindow : public GalleryWindow {
+class FolderWindow : public QMainWindow {
     Q_OBJECT
     public:
         explicit FolderWindow(IOManager::folderBundle bundle,
                                 QWidget *parent = 0);
     private:
+        /**
+         * @brief viewTypes - available sizes of cards for combo box
+         */
+        QStringList viewTypes = {"Small", "Medium", "Large", "V. Large"};
+
+        /**
+         * @brief iconSizeToVal - maps card sizes to their
+         * widths
+         */
+        QMap<QString, int> iconSizeToVal = {
+            {viewTypes[0], 90},
+            {viewTypes[1], 135},
+            {viewTypes[2], 210},
+            {viewTypes[3], 340}
+        };
+
+        /**
+         * @brief sortTypes - available card sort types
+         */
+        QStringList sortTypes = {"Name (Ascend)",
+                                 "Name (Descend)",
+                                 "Date (Ascend)",
+                                 "Date (Descend)"};
+
+        struct sessionMetadata{
+
+            int threadSession;
+            int currentCards = 0;
+            int cardsPerRow = 0;
+            int maxCards = 0;
+            bool cardRenderStatus = false;
+        };
+
+        /**
+         * @brief The renderMode enum - types of rendering modes
+         * for folders
+         */
+        enum renderMode{
+            resetRender,
+            resizeRender,
+            continueRender
+        };
+
+        /**
+         * @brief The sortMode enum - types of sorting modes
+         * to render folders
+         */
+        enum sortMode{
+            sortByNameAscend,
+            sortByNameDescend,
+            sortByDateAscend,
+            sortByDateDescend
+        };
+
         /**
          * @brief namesToFileInfos - maps file names to fileInfos
          */
@@ -170,6 +235,8 @@ class FolderWindow : public GalleryWindow {
          * @param value
          */
         void scrollBarValueChanged(int value);
+
+        void cardClicked(QListWidgetItem *item);
 
     signals:
         /**

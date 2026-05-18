@@ -23,13 +23,16 @@
 #include <QImageReader>
 #include <QSize>
 #include <QScrollBar>
+#include <QUrl>
+#include <QDesktopServices>
+#include <QPointer>
 #include "iomanager.h"
 #include "filecard.h"
 #include "guiutil.h"
 
 FolderWindow::FolderWindow(IOManager::folderBundle bundle,
                             QWidget *parent)
-             : GalleryWindow(parent) {
+             : QMainWindow(parent) {
 
     resize(1280, 720);
 
@@ -86,6 +89,8 @@ FolderWindow::FolderWindow(IOManager::folderBundle bundle,
             galleryLWidget->setDragEnabled(false);
             connect(galleryLWidget->verticalScrollBar(), &QScrollBar::valueChanged,
                         this, &FolderWindow::scrollBarValueChanged);
+            connect(galleryLWidget, &QListWidget::itemClicked,
+                        this, &FolderWindow::cardClicked);
         galleryLayout->addWidget(galleryLWidget);
 
     centralLayout->addWidget(topFrame);
@@ -210,9 +215,9 @@ void FolderWindow::processFilesAsync(int rMode){
         // continued render
         case continueRender:
             qDebug() << "Continued session: " + QString::number(metadata.threadSession) +
-                ", currentCards: " + QString::number(metadata.currentCards) +
-                ", cardsPerRow: " + QString::number(metadata.cardsPerRow) +
-                ", maxCards: " + QString::number(metadata.maxCards);
+                        ", currentCards: " + QString::number(metadata.currentCards) +
+                        ", cardsPerRow: " + QString::number(metadata.cardsPerRow) +
+                        ", maxCards: " + QString::number(metadata.maxCards);
             break;
     }
 
@@ -248,15 +253,19 @@ void FolderWindow::processFilesAsync(int rMode){
     qDebug() << "Staring thread session processFilesAsync: " +
                 QString::number(metadata.threadSession);
 
-    QThreadPool::globalInstance()->start([this, filesToProcess, currentSession,
+    QPointer<FolderWindow> safeThis = this;
+
+    QThreadPool::globalInstance()->start([safeThis, filesToProcess, currentSession,
                                             currentCards, maxCards](){
 
         QList<QString> keys = filesToProcess.keys();
         for (int index = currentCards; index < maxCards; index++){
 
+            if (!safeThis) return;
+
             QString metadata;
 
-            int sMode = sortCBox->currentIndex();
+            int sMode = safeThis->sortCBox->currentIndex();
             if (sMode == sortByDateDescend || sMode == sortByNameDescend){
                 metadata = keys[keys.count() - 1 - index];
             }
@@ -267,9 +276,8 @@ void FolderWindow::processFilesAsync(int rMode){
             QFileInfo fileInfo = filesToProcess[metadata];
             QString fileName = fileInfo.baseName();
 
-            int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
+            int cardWidth = safeThis->iconSizeToVal.value(safeThis->viewTypeCBox->currentText());
 
-            QPixmap pix;
             QImageReader reader(fileInfo.absoluteFilePath());
             QSize size;
             size.setWidth(cardWidth);
@@ -281,11 +289,14 @@ void FolderWindow::processFilesAsync(int rMode){
                 return;
             }
 
-            pix = QPixmap::fromImage(image);
+            QPixmap pix = QPixmap::fromImage(image);
 
-            QMetaObject::invokeMethod(this, [this, fileInfo, pix, index,
+            if (!safeThis) return;
+
+            QMetaObject::invokeMethod(safeThis, [safeThis, fileInfo, pix, index,
                                                 cardWidth, fileName, currentSession](){
-                emit cardReady(fileInfo, pix, index + 1, cardWidth, fileName, currentSession);
+                if (!safeThis) return;
+                emit safeThis->cardReady(fileInfo, pix, index + 1, cardWidth, fileName, currentSession);
             }, Qt::QueuedConnection);
         }
     });
@@ -398,3 +409,28 @@ void FolderWindow::scrollBarValueChanged(int value){
         processFilesAsync(continueRender);
     }
 }
+
+void FolderWindow::cardClicked(QListWidgetItem *item){
+
+    QWidget *widget = galleryLWidget->itemWidget(item);
+
+    if (widget){
+
+        FileCard *card = qobject_cast<FileCard*>(widget);
+        if (card){
+
+            qDebug() << "Clicked file: " + card->fileInfo.baseName() +
+                        ", path: " + card->fileInfo.absoluteFilePath();
+            if (!QDesktopServices::openUrl(QUrl::fromLocalFile(card->fileInfo.absoluteFilePath()))){
+                qDebug() << "Failed to open file: " + card->fileInfo.baseName();
+            }
+        }
+    }
+}
+
+
+
+
+
+
+

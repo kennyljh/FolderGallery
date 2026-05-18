@@ -427,8 +427,10 @@ void GalleryWindow::cardClicked(QListWidgetItem *item){
     QWidget *widget = galleryLWidget->itemWidget(item);
 
     if (widget){
+
         DirectoryCard *card = qobject_cast<DirectoryCard*>(widget);
         if (card){
+
             qDebug() << "Clicked folder :" + card->getFolderInfo().baseName();
             IOManager::folderBundle bundle;
             bundle.folderInfo = card->getFolderInfo();
