@@ -11,8 +11,13 @@ int main (int argc, char *argv[]) {
     GalleryWindow galleryWindow;
     galleryWindow.show();
 
+    /**
+     * Creates a new instance of FolderWindow when a selected folder is chosen
+     * for file rendering
+     **/
     QObject::connect(&galleryWindow, &GalleryWindow::folderChosen,
                         [&galleryWindow](const IOManager::folderBundle &bundle){
+
         FolderWindow *folderWindow = new FolderWindow(bundle, &galleryWindow);
         folderWindow->setAttribute(Qt::WA_DeleteOnClose);
         folderWindow->show();

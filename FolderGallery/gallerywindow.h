@@ -144,7 +144,8 @@ class GalleryWindow : public QMainWindow{
 
         /**
          * @brief generateNormalSession - session generator for
-         * startup renders or window size change renders
+         * startup renders, window resize renders, or
+         * continuing renders
          */
         void generateNormalSession();
 
@@ -244,6 +245,11 @@ class GalleryWindow : public QMainWindow{
          */
         void scrollBarValueChanged(int value);
 
+        /**
+         * @brief cardClicked - called when a listWidgetItem is clicked
+         * and prepares for file window signalling
+         * @param item
+         */
         void cardClicked(QListWidgetItem *item);
 
     signals:
@@ -268,6 +274,11 @@ class GalleryWindow : public QMainWindow{
          */
         void sortReady(int rMode);
 
+        /**
+         * @brief folderChosen - signals when a folder for file
+         * window rendering is processed
+         * @param bundle
+         */
         void folderChosen(const IOManager::folderBundle &bundle);
 };
 
