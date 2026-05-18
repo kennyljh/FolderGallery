@@ -75,12 +75,12 @@ FolderWindow::FolderWindow(IOManager::folderBundle bundle,
             dirLabel->setStyleSheet("border: 1px solid #999999; border-radius: 5px");
 
             viewTypeCBox = new QComboBox(topFrame);
-            populateCBox(*viewTypeCBox, viewTypes, viewTypes[1]);
+            guiUtil.populateCBox(*viewTypeCBox, viewTypes, viewTypes[1]);
             connect(viewTypeCBox, &QComboBox::currentIndexChanged,
                         this, &FolderWindow::viewTypeChanged);
 
             sortCBox = new QComboBox(topFrame);
-            populateCBox(*sortCBox, sortTypes, sortTypes[0]);
+            guiUtil.populateCBox(*sortCBox, sortTypes, sortTypes[0]);
             connect(sortCBox, &QComboBox::currentIndexChanged,
                         this, &FolderWindow::sortTypeChanged);
 
@@ -318,8 +318,6 @@ void FolderWindow::cardInsert(QFileInfo fileInfo, QPixmap pix,
                                 int cardNum, int cardWidth, QString cardName,
                                 int sessionID){
 
-    GUIUtil util;
-
     // omit processing cards from different session
     if (sessionID != metadata.threadSession){
         qDebug() << "Current thread: " + QString::number(metadata.threadSession) +
@@ -332,7 +330,7 @@ void FolderWindow::cardInsert(QFileInfo fileInfo, QPixmap pix,
 
     QListWidgetItem *item = new QListWidgetItem(galleryLWidget);
     item->setSizeHint(card->sizeHint());
-    util.applyWidgetFade(card, 300);
+    guiUtil.applyWidgetFade(*card, 300);
     galleryLWidget->setItemWidget(item, card);
 
     qDebug() << "Rendering card: " + QString::number(cardNum) +

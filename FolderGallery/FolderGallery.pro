@@ -12,7 +12,8 @@ SOURCES += \
     folderwindow.cpp \
     gallerywindow.cpp \
     guiutil.cpp \
-    iomanager.cpp
+    iomanager.cpp \
+    sessionmanager.cpp
 
 HEADERS += \
     directorycard.h \
@@ -20,7 +21,8 @@ HEADERS += \
     folderwindow.h \
     gallerywindow.h \
     guiutil.h \
-    iomanager.h
+    iomanager.h \
+    sessionmanager.h
 
 RESOURCES += \
     resources.qrc

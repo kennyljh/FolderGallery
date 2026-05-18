@@ -7,10 +7,10 @@
 
 GUIUtil::GUIUtil() {}
 
-void GUIUtil::applyWidgetFade(QWidget *widget, int duration){
+void GUIUtil::applyWidgetFade(QWidget &widget, int duration){
 
-    QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(widget);
-    widget->setGraphicsEffect(effect);
+    QGraphicsOpacityEffect *effect = new QGraphicsOpacityEffect(&widget);
+    widget.setGraphicsEffect(effect);
 
     QPropertyAnimation *fade = new QPropertyAnimation(effect, "opacity");
     fade->setDuration(duration);
@@ -20,8 +20,29 @@ void GUIUtil::applyWidgetFade(QWidget *widget, int duration){
     fade->start(QAbstractAnimation::DeleteWhenStopped);
 
     QAbstractAnimation::connect(fade, &QPropertyAnimation::finished,
-        [widget](){
-            widget->setGraphicsEffect(nullptr);
+        [&widget](){
+            widget.setGraphicsEffect(nullptr);
         }
     );
 }
+
+void GUIUtil::populateCBox(QComboBox &cbox,
+                            QStringList &list, QString &current){
+
+    for (const auto &item : list) cbox.addItem(item);
+    cbox.setCurrentText(current);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

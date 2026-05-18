@@ -18,6 +18,8 @@
 #include <QResizeEvent>
 #include <QTimer>
 #include "iomanager.h"
+#include "guiutil.h"
+#include "sessionmanager.h"
 
 class GalleryWindow : public QMainWindow{
     Q_OBJECT
@@ -48,15 +50,6 @@ class GalleryWindow : public QMainWindow{
                                  "Name (Descend)",
                                  "Date (Ascend)",
                                  "Date (Descend)"};
-
-        struct sessionMetadata{
-
-            int threadSession;
-            int currentCards = 0;
-            int cardsPerRow = 0;
-            int maxCards = 0;
-            bool cardRenderStatus = false;
-        };
 
         /**
          * @brief The renderMode enum - types of rendering modes
@@ -94,12 +87,6 @@ class GalleryWindow : public QMainWindow{
         QMap<QString, IOManager::folderBundle> datesToFolderBundles;
 
         /**
-         * @brief The sessionMetadata class - contains related information
-         * needed to correctly render cards per session
-         */
-        sessionMetadata metadata;
-
-        /**
          * @brief resizeTimer - timer used to ensure that resize
          * value collection only happens every 0.5s
          */
@@ -114,6 +101,10 @@ class GalleryWindow : public QMainWindow{
 
         QTimer *doubleClickTimer;
 
+        GUIUtil guiUtil;
+
+        SessionManager *session = new SessionManager("Gallery View");
+
         /**
          * @brief resizeEvent - will trigger at every instance
          * of resize, a QTimer is connected to ensure that
@@ -121,15 +112,6 @@ class GalleryWindow : public QMainWindow{
          * @param event
          */
         void resizeEvent(QResizeEvent *event) override;
-
-        /**
-         * @brief populateCBox - populates given combo box with
-         * list of strings and sets current selected option
-         * @param cbox
-         * @param list
-         * @param current
-         */
-        void populateCBox(QComboBox &cbox, QStringList &list, QString &current);
 
         /**
          * @brief getBundleToProcess - used to identify which folder
@@ -142,13 +124,6 @@ class GalleryWindow : public QMainWindow{
          * @brief cardReset - clears all widget cards and currentCards value
          */
         void cardReset();
-
-        /**
-         * @brief generateNormalSession - session generator for
-         * startup renders, window resize renders, or
-         * continuing renders
-         */
-        void generateNormalSession();
 
         QFrame *centralFrame;
         QVBoxLayout *centralLayout;

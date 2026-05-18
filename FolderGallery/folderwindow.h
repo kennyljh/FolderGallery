@@ -19,6 +19,7 @@
 #include <QTimer>
 #include <QLabel>
 #include "iomanager.h"
+#include "guiutil.h"
 
 class FolderWindow : public QMainWindow {
     Q_OBJECT
@@ -108,6 +109,8 @@ class FolderWindow : public QMainWindow {
          * have stopped rendering
          */
         QTimer *cardRenderTimer;
+
+        GUIUtil guiUtil;
 
         /**
          * @brief resizeEvent - will trigger at every instance
