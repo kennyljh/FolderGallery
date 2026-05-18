@@ -162,6 +162,7 @@ class FolderWindow : public QMainWindow {
 
         QFrame *topFrame;
         QHBoxLayout *topLayout;
+        QPushButton *openFolderBtn;
         QLabel *dirLabel;
         QComboBox *viewTypeCBox;
         QComboBox *sortCBox;
@@ -237,6 +238,8 @@ class FolderWindow : public QMainWindow {
         void scrollBarValueChanged(int value);
 
         void cardClicked(QListWidgetItem *item);
+
+        void folderButtonClicked();
 
     signals:
         /**

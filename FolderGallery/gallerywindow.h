@@ -112,6 +112,8 @@ class GalleryWindow : public QMainWindow{
          */
         QTimer *cardRenderTimer;
 
+        QTimer *doubleClickTimer;
+
         /**
          * @brief resizeEvent - will trigger at every instance
          * of resize, a QTimer is connected to ensure that

@@ -61,8 +61,18 @@ FolderWindow::FolderWindow(IOManager::folderBundle bundle,
         topFrame->setFrameStyle(QFrame::StyledPanel | QFrame::Raised);
         topLayout = new QHBoxLayout(topFrame);
 
+            openFolderBtn = new QPushButton(topFrame);
+            openFolderBtn->setIcon(QIcon(":/icons/folder-light.svg"));
+            openFolderBtn->setFixedHeight(28);
+            connect(openFolderBtn, &QPushButton::clicked,
+                        this, &FolderWindow::folderButtonClicked);
+
+            QFrame *vline = new QFrame(topFrame);
+            vline->setFrameStyle(QFrame::VLine | QFrame::Sunken);
+
             dirLabel = new QLabel(topFrame);
             dirLabel->setText(bundle.folderInfo.baseName());
+            dirLabel->setStyleSheet("border: 1px solid #999999; border-radius: 5px");
 
             viewTypeCBox = new QComboBox(topFrame);
             populateCBox(*viewTypeCBox, viewTypes, viewTypes[1]);
@@ -74,6 +84,8 @@ FolderWindow::FolderWindow(IOManager::folderBundle bundle,
             connect(sortCBox, &QComboBox::currentIndexChanged,
                         this, &FolderWindow::sortTypeChanged);
 
+        topLayout->addWidget(openFolderBtn);
+        topLayout->addWidget(vline);
         topLayout->addWidget(dirLabel, 1);
         topLayout->addWidget(viewTypeCBox);
         topLayout->addWidget(sortCBox);
@@ -426,6 +438,11 @@ void FolderWindow::cardClicked(QListWidgetItem *item){
             }
         }
     }
+}
+
+void FolderWindow::folderButtonClicked(){
+
+    QDesktopServices::openUrl(QUrl::fromLocalFile(namesToFileInfos.first().absolutePath()));
 }
 
 
