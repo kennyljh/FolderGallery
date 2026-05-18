@@ -97,6 +97,8 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
             galleryLWidget->setResizeMode(QListView::Adjust);
             connect(galleryLWidget->verticalScrollBar(), &QScrollBar::valueChanged,
                         this, &GalleryWindow::scrollBarValueChanged);
+            connect(galleryLWidget, &QListWidget::itemClicked,
+                        this, &GalleryWindow::cardClicked);
         galleryLayout->addWidget(galleryLWidget);
 
     centralLayout->addWidget(topFrame);
@@ -106,11 +108,29 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
     setCentralWidget(centralFrame);
 }
 
+void GalleryWindow::resizeEvent(QResizeEvent *event){
+
+    resizeTimer->start(500);
+}
+
 void GalleryWindow::populateCBox(QComboBox &cbox,
                                     QStringList &list, QString &current){
 
     for (const auto &item : list) cbox.addItem(item);
     cbox.setCurrentText(current);
+}
+
+QMap<QString, IOManager::folderBundle> GalleryWindow::getBundleToProcess(){
+
+    int sMode = sortCBox->currentIndex();
+
+    if (sMode == sortByNameAscend || sMode == sortByNameDescend){
+        return namesToFolderBundles;
+    }
+    else if (sMode == sortByDateAscend || sMode == sortByDateDescend){
+       return datesToFolderBundles;
+    }
+    return namesToFolderBundles;
 }
 
 void GalleryWindow::cardReset(){
@@ -154,24 +174,6 @@ void GalleryWindow::generateNormalSession(){
                 ", maxCards: " + QString::number(metadata.maxCards);
 }
 
-QMap<QString, IOManager::folderBundle> GalleryWindow::getBundleToProcess(){
-
-    int sMode = sortCBox->currentIndex();
-
-    if (sMode == sortByNameAscend || sMode == sortByNameDescend){
-        return namesToFolderBundles;
-    }
-    else if (sMode == sortByDateAscend || sMode == sortByDateDescend){
-       return datesToFolderBundles;
-    }
-    return namesToFolderBundles;
-}
-
-void GalleryWindow::resizeEvent(QResizeEvent *event){
-
-    resizeTimer->start(500);
-}
-
 void GalleryWindow::updateStatusBar(const QString &msg){
 
     statusBar()->showMessage(msg);
@@ -198,7 +200,7 @@ void GalleryWindow::searchDirStarted(){
     sortTypeChanged(sortCBox->currentIndex());
 }
 
-void GalleryWindow::processFoldersAsync(const int &rMode){
+void GalleryWindow::processFoldersAsync(int rMode){
 
     switch (rMode){
         // reset render
@@ -308,22 +310,6 @@ void GalleryWindow::processFoldersAsync(const int &rMode){
     });
 }
 
-void GalleryWindow::viewTypeChanged(){
-
-    processFoldersAsync(resetRender);
-}
-
-void GalleryWindow::windowResized(){
-
-    if (metadata.cardRenderStatus){
-        qDebug() << "Can't start window resize render when previous render is ongoing";
-        return;
-    }
-    qDebug() << "Window resized: " + QString::number(this->size().width()) +
-                " x " + QString::number(this->size().height());
-    processFoldersAsync(resizeRender);
-}
-
 void GalleryWindow::cardInsert(IOManager::folderBundle bundle, QPixmap pix,
                                 int cardNum, int cardWidth, QString cardName,
                                 int sessionID){
@@ -369,30 +355,7 @@ void GalleryWindow::cardRenderComplete(){
     }
 }
 
-void GalleryWindow::scrollBarValueChanged(const int &value){
-
-    if (!metadata.cardRenderStatus && metadata.currentCards > 0
-            && metadata.cardsPerRow > 0){
-
-        int scrollBarMax = galleryLWidget->verticalScrollBar()->maximum();
-        if (scrollBarMax == 0) return;
-        if (value / scrollBarMax < 0.7) return;
-
-        metadata.maxCards += 2 * metadata.cardsPerRow;
-        qDebug() << "Scrollbar threshold reached. Adding " +
-                    QString::number(2 * metadata.cardsPerRow) + " more cards;";
-
-        if (metadata.maxCards > getBundleToProcess().keys().size()) {
-            qDebug() << "maxCards exceed maxFolders. Revert increment";
-            metadata.maxCards = getBundleToProcess().keys().size();
-        }
-
-        qDebug() << "MaxCards update: " + QString::number(metadata.maxCards);
-        processFoldersAsync(continueRender);
-    }
-}
-
-void GalleryWindow::sortTypeChanged(const int &mode){
+void GalleryWindow::sortTypeChanged(int mode){
 
     if (mode == sortByDateAscend || mode == sortByDateDescend){
 
@@ -419,6 +382,58 @@ void GalleryWindow::sortTypeChanged(const int &mode){
     }
 }
 
+void GalleryWindow::viewTypeChanged(){
 
+    processFoldersAsync(resetRender);
+}
 
+void GalleryWindow::windowResized(){
 
+    if (metadata.cardRenderStatus){
+        qDebug() << "Can't start window resize render when previous render is ongoing";
+        return;
+    }
+    qDebug() << "Window resized: " + QString::number(this->size().width()) +
+                " x " + QString::number(this->size().height());
+    processFoldersAsync(resizeRender);
+}
+
+void GalleryWindow::scrollBarValueChanged(int value){
+
+    if (!metadata.cardRenderStatus && metadata.currentCards > 0
+            && metadata.cardsPerRow > 0){
+
+        int scrollBarMax = galleryLWidget->verticalScrollBar()->maximum();
+        if (scrollBarMax == 0) return;
+        if (value / scrollBarMax < 0.7) return;
+
+        metadata.maxCards += 2 * metadata.cardsPerRow;
+        qDebug() << "Scrollbar threshold reached. Adding " +
+                    QString::number(2 * metadata.cardsPerRow) + " more cards;";
+
+        if (metadata.maxCards > getBundleToProcess().keys().size()) {
+            qDebug() << "maxCards exceed maxFolders. Revert increment";
+            metadata.maxCards = getBundleToProcess().keys().size();
+        }
+
+        qDebug() << "MaxCards update: " + QString::number(metadata.maxCards);
+        processFoldersAsync(continueRender);
+    }
+}
+
+void GalleryWindow::cardClicked(QListWidgetItem *item){
+
+    QWidget *widget = galleryLWidget->itemWidget(item);
+
+    if (widget){
+        DirectoryCard *card = qobject_cast<DirectoryCard*>(widget);
+        if (card){
+            qDebug() << "Clicked folder :" + card->getFolderInfo().baseName();
+            IOManager::folderBundle bundle;
+            bundle.folderInfo = card->getFolderInfo();
+            bundle.filesInfos = card->getFilesInfo();
+
+            emit folderChosen(bundle);
+        }
+    }
+}

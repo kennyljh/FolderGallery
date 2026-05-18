@@ -43,10 +43,13 @@ FolderWindow::FolderWindow(IOManager::folderBundle bundle,
                 this, &FolderWindow::windowResized);
     connect(cardRenderTimer, &QTimer::timeout,
                 this, &FolderWindow::cardRenderComplete);
+    connect(this, &FolderWindow::bundleProcessed,
+                this, &FolderWindow::processBundleFinished);
     connect(this, &FolderWindow::cardReady,
                 this, &FolderWindow::cardInsert);
     connect(this, &FolderWindow::sortReady,
                 this, &FolderWindow::processFilesAsync);
+
 
     centralFrame = new QFrame(this);
     centralLayout = new QVBoxLayout(centralFrame);
@@ -56,7 +59,7 @@ FolderWindow::FolderWindow(IOManager::folderBundle bundle,
         topLayout = new QHBoxLayout(topFrame);
 
             dirLabel = new QLabel(topFrame);
-            dirLabel->setText(bundle.folderInfo.absoluteFilePath());
+            dirLabel->setText(bundle.folderInfo.baseName());
 
             viewTypeCBox = new QComboBox(topFrame);
             populateCBox(*viewTypeCBox, viewTypes, viewTypes[1]);
@@ -93,24 +96,16 @@ FolderWindow::FolderWindow(IOManager::folderBundle bundle,
     processBundleAsync(bundle);
 }
 
-void FolderWindow::processBundleAsync(const IOManager::folderBundle &bundle){
+void FolderWindow::resizeEvent(QResizeEvent *event){
 
-    if (bundle.filesInfos.isEmpty()){
-        qDebug() << "No files to process";
-        return;
-    }
+    resizeTimer->start(500);
+}
 
-    QThreadPool::globalInstance()->start([this, bundle](){
+void FolderWindow::populateCBox(QComboBox &cbox, QStringList &list,
+                                QString &current){
 
-        for (auto const &file : bundle.filesInfos){
-
-            namesToFileInfos.insert(file.baseName(), file);
-            qDebug() << "Found file: " + file.baseName();
-        }
-        QMetaObject::invokeMethod(this, [this](){
-            emit bundleProcessed();
-        });
-    });
+    for (const auto &item : list) cbox.addItem(item);
+    cbox.setCurrentText(current);
 }
 
 QMap<QString, QFileInfo> FolderWindow::getBundleToProcess(){
@@ -126,9 +121,77 @@ QMap<QString, QFileInfo> FolderWindow::getBundleToProcess(){
     return namesToFileInfos;
 }
 
+void FolderWindow::cardReset(){
+
+    galleryLWidget->clear();
+    metadata.currentCards = 0;
+}
+
+void FolderWindow::processBundleAsync(const IOManager::folderBundle &bundle){
+
+    if (bundle.filesInfos.isEmpty()){
+        qDebug() << "No files to process";
+        return;
+    }
+
+    QThreadPool::globalInstance()->start([this, bundle](){
+
+        for (auto const &file : bundle.filesInfos){
+            if (!QImageReader::supportedImageFormats().contains(file.suffix())) continue;
+            namesToFileInfos.insert(file.baseName(), file);
+            qDebug() << "Found file: " + file.baseName();
+        }
+        QMetaObject::invokeMethod(this, [this](){
+            emit bundleProcessed();
+            emit updateStatusBar("Found " + QString::number(namesToFileInfos.keys().count()) +
+                                    " files");
+        });
+    });
+}
+
 void FolderWindow::processBundleFinished(){
 
     sortTypeChanged(sortCBox->currentIndex());
+}
+
+void FolderWindow::generateNormalSession(){
+
+    bool idGenerated = false;
+    do {
+        int sessionID = QRandomGenerator::global()->generate();
+        if (sessionID != metadata.threadSession){
+            metadata.threadSession = sessionID;
+            idGenerated = true;
+        }
+    }
+    while (!idGenerated);
+
+    QSize size = this->size();
+
+    int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
+    // account for margins of directory cards
+    metadata.cardsPerRow = size.width() / (cardWidth + 10);
+    // account for Qlabel of directory cards
+    int rowsToDisplay = size.height() / ((cardWidth + 30) * 1.414);
+    // to give the illusion that more images are loaded but not all for startup
+    rowsToDisplay += 2;
+    metadata.maxCards = metadata.cardsPerRow * rowsToDisplay;
+
+    if (metadata.maxCards > getBundleToProcess().keys().size())
+        metadata.maxCards = getBundleToProcess().keys().size();
+
+    // in cases when we do a resize render
+    if (metadata.maxCards < metadata.currentCards) metadata.maxCards = metadata.currentCards;
+
+    qDebug() << "Normal file session generated: " + QString::number(metadata.threadSession) +
+                ", currentCards: " + QString::number(metadata.currentCards) +
+                ", cardsPerRow: " + QString::number(metadata.cardsPerRow) +
+                ", maxCards: " + QString::number(metadata.maxCards);
+}
+
+void FolderWindow::updateStatusBar(const QString &msg){
+
+    statusBar()->showMessage(msg);
 }
 
 void FolderWindow::processFilesAsync(int rMode){
@@ -184,17 +247,6 @@ void FolderWindow::processFilesAsync(int rMode){
     qDebug() << "Staring thread session processFilesAsync: " +
                 QString::number(metadata.threadSession);
 
-    /**
-     * Dev Note: It might be wise to run each individual instance of pixmap creation on
-     * a new thread, however, this presents an insertion order problem. Because
-     * each instance runs on some thread, we have no guarantee that they will finish in
-     * order, hence the ordering of cards will be inconsistent each time.
-     *
-     * Currently, we put the entire process of iteration into a single thread. This
-     * gives us a nice card pop in effect. But, render on window resize will not
-     * proceed until current render is complete, otherwise card insertion order will
-     * not be sequential.
-     **/
     QThreadPool::globalInstance()->start([this, filesToProcess, currentSession,
                                             currentCards, maxCards](){
 
@@ -223,8 +275,10 @@ void FolderWindow::processFilesAsync(int rMode){
             reader.setScaledSize(size);
 
             QImage image = reader.read();
-            if (image.isNull()) return;
-            qDebug() << "File contains invalid image: " + fileInfo.baseName();
+            if (image.isNull()) {
+                qDebug() << "File contains invalid image: " + fileInfo.baseName();
+                return;
+            }
 
             pix = QPixmap::fromImage(image);
 
@@ -234,33 +288,6 @@ void FolderWindow::processFilesAsync(int rMode){
             }, Qt::QueuedConnection);
         }
     });
-}
-
-void FolderWindow::sortTypeChanged(const int &mode){
-
-    if (mode == sortByDateAscend || mode == sortByDateDescend){
-
-        if (datesToFileInfos.isEmpty()){
-
-            QThreadPool::globalInstance()->start([this](){
-
-                for (auto const &file : namesToFileInfos){
-                    QString dateTime = file.birthTime().date().toString("yyyy/MM/dd") + "-" +
-                                        file.birthTime().time().toString(Qt::ISODateWithMs);
-                    datesToFileInfos.insert(dateTime, file);
-                }
-                QMetaObject::invokeMethod(this, [this](){
-                    emit sortReady(resetRender);
-                }, Qt::QueuedConnection);
-            });
-        }
-        else {
-            emit sortReady(resetRender);
-        }
-    }
-    else if (mode == sortByNameAscend || mode == sortByNameDescend){
-        emit sortReady(resetRender);
-    }
 }
 
 void FolderWindow::cardInsert(QFileInfo fileInfo, QPixmap pix,
@@ -291,3 +318,82 @@ void FolderWindow::cardInsert(QFileInfo fileInfo, QPixmap pix,
     cardRenderTimer->start(500);
 }
 
+void FolderWindow::cardRenderComplete(){
+
+    metadata.cardRenderStatus = false;
+    qDebug() << "Card rendering session complete";
+
+    int scrollBarMax = galleryLWidget->verticalScrollBar()->maximum();
+    if (scrollBarMax == 0) return;
+    if ((galleryLWidget->verticalScrollBar()->value() / scrollBarMax) == 1){
+
+        scrollBarValueChanged(galleryLWidget->verticalScrollBar()->value());
+        qDebug() << "Scrollbar maxed out after rendering, render more";
+    }
+}
+
+void FolderWindow::sortTypeChanged(int mode){
+
+    if (mode == sortByDateAscend || mode == sortByDateDescend){
+
+        if (datesToFileInfos.isEmpty()){
+
+            QThreadPool::globalInstance()->start([this](){
+
+                for (auto const &file : namesToFileInfos){
+                    QString dateTime = file.birthTime().date().toString("yyyy/MM/dd") + "-" +
+                                        file.birthTime().time().toString(Qt::ISODateWithMs);
+                    datesToFileInfos.insert(dateTime, file);
+                }
+                QMetaObject::invokeMethod(this, [this](){
+                    emit sortReady(resetRender);
+                }, Qt::QueuedConnection);
+            });
+        }
+        else {
+            emit sortReady(resetRender);
+        }
+    }
+    else if (mode == sortByNameAscend || mode == sortByNameDescend){
+        emit sortReady(resetRender);
+    }
+}
+
+void FolderWindow::viewTypeChanged(){
+
+    processFilesAsync(resetRender);
+}
+
+void FolderWindow::windowResized(){
+
+    if (metadata.cardRenderStatus){
+        qDebug() << "Can't start window resize render when previous render is ongoing";
+        return;
+    }
+    qDebug() << "Window resized: " + QString::number(this->size().width()) +
+                " x " + QString::number(this->size().height());
+    processFilesAsync(resizeRender);
+}
+
+void FolderWindow::scrollBarValueChanged(int value){
+
+    if (!metadata.cardRenderStatus && metadata.currentCards > 0
+            && metadata.cardsPerRow > 0){
+
+        int scrollBarMax = galleryLWidget->verticalScrollBar()->maximum();
+        if (scrollBarMax == 0) return;
+        if (value / scrollBarMax < 0.7) return;
+
+        metadata.maxCards += 2 * metadata.cardsPerRow;
+        qDebug() << "Scrollbar threshold reached. Adding " +
+                    QString::number(2 * metadata.cardsPerRow) + " more cards;";
+
+        if (metadata.maxCards > getBundleToProcess().keys().size()) {
+            qDebug() << "maxCards exceed maxFolders. Revert increment";
+            metadata.maxCards = getBundleToProcess().keys().size();
+        }
+
+        qDebug() << "MaxCards update: " + QString::number(metadata.maxCards);
+        processFilesAsync(continueRender);
+    }
+}

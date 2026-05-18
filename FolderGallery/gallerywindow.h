@@ -24,54 +24,11 @@ class GalleryWindow : public QMainWindow{
     public:
         explicit GalleryWindow(QWidget *parent = 0);
 
-    private:
-        /**
-         * @brief namesToFolderBundles - mapping of folder names
-         * to folder bundles, bundles contain information on parent dir
-         * and child dirs
-         */
-        QMap<QString, IOManager::folderBundle> namesToFolderBundles;
-
-        /**
-         * @brief namesToFolderBundles - mapping of folder birthdates
-         * to folder bundles, bundles contain information on parent dir
-         * and child dirs
-         */
-        QMap<QString, IOManager::folderBundle> datesToFolderBundles;
-
-        QPushButton *folderPictureBtn;
-        QLineEdit *currentDirLnEdt;
-        QPushButton *searchBtn;
-        QPushButton *settingsBtn;
-
-        /**
-         * @brief getBundleToProcess - used to identify which folder
-         * bundle to process, e.g. names or dates bundles
-         * @return
-         */
-        QMap<QString, IOManager::folderBundle> getBundleToProcess();
-
     protected:
-        /**
-         * @brief resizeEvent - will trigger at every instance
-         * of resize, a QTimer is connected to ensure that
-         * size is only processed every 500ms
-         * @param event
-         */
-        void resizeEvent(QResizeEvent *event) override;
-
         /**
          * @brief viewTypes - available sizes of cards for combo box
          */
         QStringList viewTypes = {"Small", "Medium", "Large", "V. Large"};
-
-        /**
-         * @brief sortTypes - available card sort types
-         */
-        QStringList sortTypes = {"Name (Ascend)",
-                                 "Name (Descend)",
-                                 "Date (Ascend)",
-                                 "Date (Descend)"};
 
         /**
          * @brief iconSizeToVal - maps card sizes to their
@@ -84,6 +41,14 @@ class GalleryWindow : public QMainWindow{
             {viewTypes[3], 340}
         };
 
+        /**
+         * @brief sortTypes - available card sort types
+         */
+        QStringList sortTypes = {"Name (Ascend)",
+                                 "Name (Descend)",
+                                 "Date (Ascend)",
+                                 "Date (Descend)"};
+
         struct sessionMetadata{
 
             int threadSession;
@@ -92,25 +57,6 @@ class GalleryWindow : public QMainWindow{
             int maxCards = 0;
             bool cardRenderStatus = false;
         };
-
-        /**
-         * @brief The sessionMetadata class - contains related information
-         * needed to correctly render cards per session
-         */
-        sessionMetadata metadata;
-
-        /**
-         * @brief resizeTimer - timer used to ensure that resize
-         * value collection only happens every 0.5s
-         */
-        QTimer *resizeTimer;
-
-        /**
-         * @brief cardRenderTimer - times used to ensure that
-         * addition to maxCards can only happen when cards
-         * have stopped rendering
-         */
-        QTimer *cardRenderTimer;
 
         /**
          * @brief The renderMode enum - types of rendering modes
@@ -133,6 +79,48 @@ class GalleryWindow : public QMainWindow{
             sortByDateDescend
         };
 
+    private:
+        /**
+         * @brief namesToFolderBundles - mapping of folder names
+         * to folder bundles, bundles contain information on parent dir
+         * and child dirs
+         */
+        QMap<QString, IOManager::folderBundle> namesToFolderBundles;
+
+        /**
+         * @brief namesToFolderBundles - mapping of folder birthdates
+         * to folder bundles, bundles contain information on parent dir
+         * and child dirs
+         */
+        QMap<QString, IOManager::folderBundle> datesToFolderBundles;
+
+        /**
+         * @brief The sessionMetadata class - contains related information
+         * needed to correctly render cards per session
+         */
+        sessionMetadata metadata;
+
+        /**
+         * @brief resizeTimer - timer used to ensure that resize
+         * value collection only happens every 0.5s
+         */
+        QTimer *resizeTimer;
+
+        /**
+         * @brief cardRenderTimer - times used to ensure that
+         * addition to maxCards can only happen when cards
+         * have stopped rendering
+         */
+        QTimer *cardRenderTimer;
+
+        /**
+         * @brief resizeEvent - will trigger at every instance
+         * of resize, a QTimer is connected to ensure that
+         * size is only processed every 500ms
+         * @param event
+         */
+        void resizeEvent(QResizeEvent *event) override;
+
         /**
          * @brief populateCBox - populates given combo box with
          * list of strings and sets current selected option
@@ -141,6 +129,13 @@ class GalleryWindow : public QMainWindow{
          * @param current
          */
         void populateCBox(QComboBox &cbox, QStringList &list, QString &current);
+
+        /**
+         * @brief getBundleToProcess - used to identify which folder
+         * bundle to process, e.g. names or dates bundles
+         * @return
+         */
+        QMap<QString, IOManager::folderBundle> getBundleToProcess();
 
         /**
          * @brief cardReset - clears all widget cards and currentCards value
@@ -158,9 +153,12 @@ class GalleryWindow : public QMainWindow{
 
         QFrame *topFrame;
         QHBoxLayout *topLayout;
-
+        QPushButton *folderPictureBtn;
+        QLineEdit *currentDirLnEdt;
+        QPushButton *searchBtn;
         QComboBox *viewTypeCBox;
         QComboBox *sortCBox;
+        QPushButton *settingsBtn;
 
         QFrame *galleryFrame;
         QVBoxLayout *galleryLayout;
@@ -193,14 +191,7 @@ class GalleryWindow : public QMainWindow{
          * widgets. Rendering differs depending on renderMode and sortMode
          * @param rMode
          */
-        void processFoldersAsync(const int &rMode);
-
-        /**
-         * @brief sortTypeChanged - called when the selected sort
-         * type is changed
-         * @param index
-         */
-        void sortTypeChanged(const int &mode);
+        void processFoldersAsync(int rMode);
 
         /**
          * @brief cardInsert - begins inserting card into appropriate
@@ -219,7 +210,20 @@ class GalleryWindow : public QMainWindow{
                         int cardNum, int cardWidth, QString cardName,
                         int sessionID);
 
-    protected slots:
+        /**
+         * @brief cardRenderComplete - updates cardRenderStatus
+         * on render completion. If scroll bar is maxed out, add
+         * more cards
+         */
+        void cardRenderComplete();
+
+        /**
+         * @brief sortTypeChanged - called when the selected sort
+         * type is changed
+         * @param index
+         */
+        void sortTypeChanged(int mode);
+
         /**
          * @brief viewTypeChanged - card sizes have changed in combo box
          * and need to be updated
@@ -234,18 +238,13 @@ class GalleryWindow : public QMainWindow{
         void windowResized();
 
         /**
-         * @brief cardRenderComplete - updates cardRenderStatus
-         * on render completion. If scroll bar is maxed out, add
-         * more cards
-         */
-        void cardRenderComplete();
-
-        /**
          * @brief scrollBarValueChanged - called when scrollbar value
          * changes. Only add more cards if several conditions satisfied.
          * @param value
          */
-        void scrollBarValueChanged(const int &value);
+        void scrollBarValueChanged(int value);
+
+        void cardClicked(QListWidgetItem *item);
 
     signals:
         /**
@@ -267,7 +266,9 @@ class GalleryWindow : public QMainWindow{
          * for rendering
          * @param rMode
          */
-        void sortReady(const int &rMode);
+        void sortReady(int rMode);
+
+        void folderChosen(const IOManager::folderBundle &bundle);
 };
 
 #endif // GALLERYWINDOW_H

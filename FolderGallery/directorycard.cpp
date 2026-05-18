@@ -33,3 +33,11 @@ DirectoryCard::DirectoryCard(QFileInfo &folderInfo, QFileInfoList &filesInfos,
     mainLayout->addWidget(hline);
     mainLayout->addWidget(nameLabel);
 }
+
+QFileInfo DirectoryCard::getFolderInfo(){
+    return folderInfo;
+}
+
+QFileInfoList DirectoryCard::getFilesInfo(){
+    return filesInfos;
+}
