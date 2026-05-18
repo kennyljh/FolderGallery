@@ -119,13 +119,6 @@ void FolderWindow::resizeEvent(QResizeEvent *event){
     resizeTimer->start(500);
 }
 
-void FolderWindow::populateCBox(QComboBox &cbox, QStringList &list,
-                                QString &current){
-
-    for (const auto &item : list) cbox.addItem(item);
-    cbox.setCurrentText(current);
-}
-
 QMap<QString, QFileInfo> FolderWindow::getBundleToProcess(){
 
     int sMode = sortCBox->currentIndex();
@@ -142,7 +135,7 @@ QMap<QString, QFileInfo> FolderWindow::getBundleToProcess(){
 void FolderWindow::cardReset(){
 
     galleryLWidget->clear();
-    metadata.currentCards = 0;
+    session->reset();
 }
 
 void FolderWindow::processBundleAsync(const IOManager::folderBundle &bundle){
@@ -172,41 +165,6 @@ void FolderWindow::processBundleFinished(){
     sortTypeChanged(sortCBox->currentIndex());
 }
 
-void FolderWindow::generateNormalSession(){
-
-    bool idGenerated = false;
-    do {
-        int sessionID = QRandomGenerator::global()->generate();
-        if (sessionID != metadata.threadSession){
-            metadata.threadSession = sessionID;
-            idGenerated = true;
-        }
-    }
-    while (!idGenerated);
-
-    QSize size = this->size();
-
-    int cardWidth = iconSizeToVal.value(viewTypeCBox->currentText());
-    // account for margins of directory cards
-    metadata.cardsPerRow = size.width() / (cardWidth + 10);
-    // account for Qlabel of directory cards
-    int rowsToDisplay = size.height() / ((cardWidth + 30) * 1.414);
-    // to give the illusion that more images are loaded but not all for startup
-    rowsToDisplay += 2;
-    metadata.maxCards = metadata.cardsPerRow * rowsToDisplay;
-
-    if (metadata.maxCards > getBundleToProcess().keys().size())
-        metadata.maxCards = getBundleToProcess().keys().size();
-
-    // in cases when we do a resize render
-    if (metadata.maxCards < metadata.currentCards) metadata.maxCards = metadata.currentCards;
-
-    qDebug() << "Normal file session generated: " + QString::number(metadata.threadSession) +
-                ", currentCards: " + QString::number(metadata.currentCards) +
-                ", cardsPerRow: " + QString::number(metadata.cardsPerRow) +
-                ", maxCards: " + QString::number(metadata.maxCards);
-}
-
 void FolderWindow::updateStatusBar(const QString &msg){
 
     statusBar()->showMessage(msg);
@@ -218,18 +176,24 @@ void FolderWindow::processFilesAsync(int rMode){
         // reset render
         case resetRender:
             cardReset();
-            generateNormalSession();
+            session->start(this->size(),
+                            iconSizeToVal.value(viewTypeCBox->currentText()),
+                            getBundleToProcess().keys().size(),
+                            session->getCurrentCards());
             break;
         // resize render
         case resizeRender:
-            generateNormalSession();
+            session->start(this->size(),
+                            iconSizeToVal.value(viewTypeCBox->currentText()),
+                            getBundleToProcess().keys().size(),
+                            session->getCurrentCards());
             break;
         // continued render
         case continueRender:
-            qDebug() << "Continued session: " + QString::number(metadata.threadSession) +
-                        ", currentCards: " + QString::number(metadata.currentCards) +
-                        ", cardsPerRow: " + QString::number(metadata.cardsPerRow) +
-                        ", maxCards: " + QString::number(metadata.maxCards);
+            qDebug() << "Continued folder view session: " + QString::number(session->getThreadSession()) +
+                        ", currentCards: " + QString::number(session->getCurrentCards()) +
+                        ", cardsPerRow: " + QString::number(session->getCardsPerRow()) +
+                        ", maxCards: " + QString::number(session->getMaxCards());
             break;
     }
 
@@ -257,13 +221,13 @@ void FolderWindow::processFilesAsync(int rMode){
         }
     }
 
-    int currentSession = metadata.threadSession;
-    int currentCards = metadata.currentCards;
-    int maxCards = metadata.maxCards;
-    metadata.currentCards = metadata.maxCards;
+    int currentSession = session->getThreadSession();
+    int currentCards = session->getCurrentCards();
+    int maxCards = session->getMaxCards();
+    session->updateCurrentCards(maxCards);
 
     qDebug() << "Staring thread session processFilesAsync: " +
-                QString::number(metadata.threadSession);
+                QString::number(session->getThreadSession());
 
     QPointer<FolderWindow> safeThis = this;
 
@@ -319,8 +283,8 @@ void FolderWindow::cardInsert(QFileInfo fileInfo, QPixmap pix,
                                 int sessionID){
 
     // omit processing cards from different session
-    if (sessionID != metadata.threadSession){
-        qDebug() << "Current thread: " + QString::number(metadata.threadSession) +
+    if (sessionID != session->getThreadSession()){
+        qDebug() << "Current thread: " + QString::number(session->getThreadSession()) +
                     " <<< skipped old thread: " + QString::number(sessionID);
         return;
     }
@@ -336,13 +300,13 @@ void FolderWindow::cardInsert(QFileInfo fileInfo, QPixmap pix,
     qDebug() << "Rendering card: " + QString::number(cardNum) +
                 ", folder: " + cardName;
 
-    metadata.cardRenderStatus = true;
+    session->updateRenderStatus(true);
     cardRenderTimer->start(500);
 }
 
 void FolderWindow::cardRenderComplete(){
 
-    metadata.cardRenderStatus = false;
+    session->updateRenderStatus(false);
     qDebug() << "Card rendering session complete";
 
     int scrollBarMax = galleryLWidget->verticalScrollBar()->maximum();
@@ -388,7 +352,7 @@ void FolderWindow::viewTypeChanged(){
 
 void FolderWindow::windowResized(){
 
-    if (metadata.cardRenderStatus){
+    if (session->getCardRenderStatus()){
         qDebug() << "Can't start window resize render when previous render is ongoing";
         return;
     }
@@ -399,23 +363,16 @@ void FolderWindow::windowResized(){
 
 void FolderWindow::scrollBarValueChanged(int value){
 
-    if (!metadata.cardRenderStatus && metadata.currentCards > 0
-            && metadata.cardsPerRow > 0){
+    if (!session->getCardRenderStatus() && session->getMaxCards() > 0
+            && session->getCardsPerRow() > 0){
 
         int scrollBarMax = galleryLWidget->verticalScrollBar()->maximum();
         if (scrollBarMax == 0) return;
         if (value / scrollBarMax < 0.7) return;
 
-        metadata.maxCards += 2 * metadata.cardsPerRow;
-        qDebug() << "Scrollbar threshold reached. Adding " +
-                    QString::number(2 * metadata.cardsPerRow) + " more cards;";
+        qDebug() << "Scrollbar threshold reached";
+        session->increaseMaxCards(2, getBundleToProcess().keys().size());
 
-        if (metadata.maxCards > getBundleToProcess().keys().size()) {
-            qDebug() << "maxCards exceed maxFolders. Revert increment";
-            metadata.maxCards = getBundleToProcess().keys().size();
-        }
-
-        qDebug() << "MaxCards update: " + QString::number(metadata.maxCards);
         processFilesAsync(continueRender);
     }
 }

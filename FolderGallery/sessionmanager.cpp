@@ -53,7 +53,6 @@ void SessionManager::generateSession(QSize windowSize, int cardWidth,
 
 void SessionManager::resetSession(){
 
-    metadata.sessionName = "noname-session";
     metadata.threadSession = 0;
     metadata.currentCards = 0;
     metadata.cardsPerRow = 0;

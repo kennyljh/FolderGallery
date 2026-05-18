@@ -20,6 +20,7 @@
 #include <QLabel>
 #include "iomanager.h"
 #include "guiutil.h"
+#include "sessionmanager.h"
 
 class FolderWindow : public QMainWindow {
     Q_OBJECT
@@ -50,15 +51,6 @@ class FolderWindow : public QMainWindow {
                                  "Name (Descend)",
                                  "Date (Ascend)",
                                  "Date (Descend)"};
-
-        struct sessionMetadata{
-
-            int threadSession;
-            int currentCards = 0;
-            int cardsPerRow = 0;
-            int maxCards = 0;
-            bool cardRenderStatus = false;
-        };
 
         /**
          * @brief The renderMode enum - types of rendering modes
@@ -92,12 +84,6 @@ class FolderWindow : public QMainWindow {
         QMap<QString, QFileInfo> datesToFileInfos;
 
         /**
-         * @brief The sessionMetadata class - contains related information
-         * needed to correctly render cards per session
-         */
-        sessionMetadata metadata;
-
-        /**
          * @brief resizeTimer - timer used to ensure that resize
          * value collection only happens every 0.5s
          */
@@ -112,6 +98,8 @@ class FolderWindow : public QMainWindow {
 
         GUIUtil guiUtil;
 
+        SessionManager *session = new SessionManager("Folder View");
+
         /**
          * @brief resizeEvent - will trigger at every instance
          * of resize, a QTimer is connected to ensure that
@@ -119,15 +107,6 @@ class FolderWindow : public QMainWindow {
          * @param event
          */
         void resizeEvent(QResizeEvent *event) override;
-
-        /**
-         * @brief populateCBox - populates given combo box with
-         * list of strings and sets current selected option
-         * @param cbox
-         * @param list
-         * @param current
-         */
-        void populateCBox(QComboBox &cbox, QStringList &list, QString &current);
 
         /**
          * @brief getBundleToProcess - used to identify which file bundle to
@@ -153,12 +132,6 @@ class FolderWindow : public QMainWindow {
          * according to sortType preference
          */
         void processBundleFinished();
-
-        /**
-         * @brief generateNormalSession - generates a fresh rendering session
-         * by updating sessionMetadata
-         */
-        void generateNormalSession();
 
         QFrame *centralFrame;
         QVBoxLayout *centralLayout;
