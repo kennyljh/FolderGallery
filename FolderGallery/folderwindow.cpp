@@ -72,7 +72,8 @@ FolderWindow::FolderWindow(IOManager::folderBundle bundle,
 
             dirLabel = new QLabel(topFrame);
             dirLabel->setText(bundle.folderInfo.baseName());
-            dirLabel->setStyleSheet("border: 1px solid #999999; border-radius: 5px");
+            dirLabel->setTextInteractionFlags(Qt::TextSelectableByMouse);
+            dirLabel->setStyleSheet("border-bottom: 1px solid #999999; border-radius: 0px");
 
             viewTypeCBox = new QComboBox(topFrame);
             guiUtil.populateCBox(*viewTypeCBox, viewTypes, viewTypes[1]);
