@@ -14,11 +14,14 @@ class FileCard : public QFrame{
         explicit FileCard(QFileInfo &fileInfo, int &width,
                             QPixmap &pix, QWidget *parent);
 
-    QFileInfo fileInfo;
+        QFileInfo getFileInfo();
 
-    QVBoxLayout *mainLayout;
-    QLabel *imageLabel;
-    QLabel *nameLabel;
+    private:
+        QFileInfo fileInfo;
+
+        QVBoxLayout *mainLayout;
+        QLabel *imageLabel;
+        QLabel *nameLabel;
 };
 
 #endif // FILECARD_H

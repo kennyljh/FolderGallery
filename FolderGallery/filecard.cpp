@@ -32,3 +32,7 @@ FileCard::FileCard(QFileInfo &fileInfo, int &width,
     mainLayout->addWidget(hline);
     mainLayout->addWidget(nameLabel);
 }
+
+QFileInfo FileCard::getFileInfo(){
+    return fileInfo;
+}

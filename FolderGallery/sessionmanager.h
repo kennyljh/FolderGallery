@@ -41,6 +41,11 @@ class SessionManager{
     public:
         SessionManager();
 
+        /**
+         * @brief SessionManager - constructor, provided sessionName
+         * will be displayed in future sessions for identification
+         * @param sessionName
+         */
         SessionManager(QString sessionName);
 
         int getThreadSession();
@@ -53,15 +58,44 @@ class SessionManager{
 
         bool getCardRenderStatus();
 
+        /**
+         * @brief start - create a fresh session with updated
+         * metadata and identifier
+         * @param windowSize
+         * @param cardWidth
+         * @param cardLimit
+         * @param cardBaseline
+         */
         void start(QSize windowSize, int cardWidth,
                     int cardLimit, int cardBaseline);
 
+        /**
+         * @brief reset - returns metadata values to
+         * default
+         */
         void reset();
 
+        /**
+         * @brief updateCurrentCards - sets currentCards
+         * by the given amount
+         * @param val
+         */
         void updateCurrentCards(int val);
 
+        /**
+         * @brief updateRenderStatus - change render
+         * status of metadata
+         * @param status
+         */
         void updateRenderStatus(bool status);
 
+        /**
+         * @brief increaseMaxCards - increase the maxCards
+         * count by the number of rounds. If result exceeds
+         * limit, maxCards becomes the limit.
+         * @param rowIncrease
+         * @param cardLimit
+         */
         void increaseMaxCards(int rowIncrease, int cardLimit);
 };
 

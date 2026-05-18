@@ -18,6 +18,7 @@ class DirectoryCard : public QFrame{
         QFileInfo getFolderInfo();
 
         QFileInfoList getFilesInfo();
+
     private:
         QFileInfo folderInfo;
         QFileInfoList filesInfos;
@@ -25,6 +26,8 @@ class DirectoryCard : public QFrame{
         QVBoxLayout *mainLayout;
         QLabel *imageLabel;
         QLabel *nameLabel;
+
+        // TODO - create hover functionality
 };
 
 #endif // DIRECTORYCARD_H

@@ -99,8 +99,6 @@ class GalleryWindow : public QMainWindow{
          */
         QTimer *cardRenderTimer;
 
-        QTimer *doubleClickTimer;
-
         GUIUtil guiUtil;
 
         SessionManager *session = new SessionManager("Gallery View");
@@ -251,7 +249,7 @@ class GalleryWindow : public QMainWindow{
         void sortReady(int rMode);
 
         /**
-         * @brief folderChosen - signals when a folder for file
+         * @brief folderChosen - signals main when a folder for file
          * window rendering is processed
          * @param bundle
          */

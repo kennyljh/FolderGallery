@@ -386,10 +386,13 @@ void FolderWindow::cardClicked(QListWidgetItem *item){
         FileCard *card = qobject_cast<FileCard*>(widget);
         if (card){
 
-            qDebug() << "Clicked file: " + card->fileInfo.baseName() +
-                        ", path: " + card->fileInfo.absoluteFilePath();
-            if (!QDesktopServices::openUrl(QUrl::fromLocalFile(card->fileInfo.absoluteFilePath()))){
-                qDebug() << "Failed to open file: " + card->fileInfo.baseName();
+            QFileInfo fileInfo = card->getFileInfo();
+
+            qDebug() << "Clicked file: " + fileInfo.baseName() +
+                        ", path: " + fileInfo.absoluteFilePath();
+
+            if (!QDesktopServices::openUrl(QUrl::fromLocalFile(fileInfo.absoluteFilePath()))){
+                qDebug() << "Failed to open file: " + fileInfo.baseName();
             }
         }
     }
@@ -399,10 +402,4 @@ void FolderWindow::folderButtonClicked(){
 
     QDesktopServices::openUrl(QUrl::fromLocalFile(namesToFileInfos.first().absolutePath()));
 }
-
-
-
-
-
-
 
