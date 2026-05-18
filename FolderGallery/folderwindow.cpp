@@ -83,6 +83,7 @@ FolderWindow::FolderWindow(IOManager::folderBundle bundle,
             galleryLWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
             galleryLWidget->setViewMode(QListView::IconMode);
             galleryLWidget->setResizeMode(QListView::Adjust);
+            galleryLWidget->setDragEnabled(false);
             connect(galleryLWidget->verticalScrollBar(), &QScrollBar::valueChanged,
                         this, &FolderWindow::scrollBarValueChanged);
         galleryLayout->addWidget(galleryLWidget);

@@ -95,6 +95,7 @@ GalleryWindow::GalleryWindow(QWidget *parent) : QMainWindow(parent) {
             galleryLWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
             galleryLWidget->setViewMode(QListView::IconMode);
             galleryLWidget->setResizeMode(QListView::Adjust);
+            galleryLWidget->setDragEnabled(false);
             connect(galleryLWidget->verticalScrollBar(), &QScrollBar::valueChanged,
                         this, &GalleryWindow::scrollBarValueChanged);
             connect(galleryLWidget, &QListWidget::itemClicked,
